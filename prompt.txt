@@ -1,0 +1,113 @@
+
+last time prompt is this 
+"# Role & Project Scope
+Act as a Senior Django Full-Stack Developer. Build a comprehensive, production-ready, fully dynamic web application named "TravelReady" (Tour & Travel Management + Custom Trip Builder System).
+
+## System Architecture & Technical Stack
+- Backend Framework: Native Django (Python 3.10+)
+- REST API: DO NOT use Django REST Framework (DRF). Use standard Django Template Views, Class-Based Views (CBVs), or JsonResponse where needed.
+- Database: Django SQLite (Default engine)
+- Authentication: Django's built-in session-based authentication (`django.contrib.auth`)
+- Frontend Framework: HTML5, CSS3, Bootstrap 5 CSS
+- Interactive Frontend Components: HTMX (for dynamic price recalculations, filtering, and route reordering without full page reloads) and lightweight Vanilla JavaScript.
+- File & Media Handling: Store uploaded images (destinations, gallery, tickets, payment receipts) locally using Django's `MEDIA_ROOT` and `MEDIA_URL` configurations.
+
+---
+
+## Administrative Structure (Two-Tier Admin Concept)
+1. Superadmin (Built-in Django Admin - `/admin/`):
+   - Handles low-level database models, Django auth permissions, user management, and core configuration.
+2. Web Admin Panel (Custom Web-based Admin Portal - `/dashboard/admin/`):
+   - A dedicated UI built with Bootstrap 5 for travel managers.
+   - Allows non-technical staff to control all dynamic website elements: adding/editing destinations, packages, pricing rules, managing customer quotes, verifying payments, updating booking statuses, and viewing revenue analytics.
+
+---
+
+## Core Database Models & Schema Design
+Create Django models inside appropriate apps (`accounts`, `destinations`, `packages`, `custom_trips`, `bookings`, `tickets`, `payments`):
+- Destination: Name, Type (`INSIDE_COUNTRY`, `OUTSIDE_COUNTRY`), Location/District, Description, Main Image, Gallery Images, Rules & Regulations, Best Season, Base Visit Cost (`DecimalField`), Status (`Active/Inactive`).
+- Hotel: Name, Destination (FK), Category (`BUDGET`, `THREE_STAR`, `FOUR_STAR`, `LUXURY`), Per Night Rate, Room Types.
+- Activity: Title, Destination (FK), Adult Price, Child Price, Duration, Availability Toggle.
+- Transportation: Route Origin, Destination (FK), Vehicle Type (`BUS`, `CAR`, `JEEP`, `FLIGHT`), Per Person Price, Per Vehicle Price.
+- Predefined Package: Title, Destination (FK), Package Type (`SINGLE`, `COUPLE`, `FAMILY`), Base Days, Base Price, Included Activities (M2M), Hotel (FK).
+- CustomTrip / CustomTripDestination: Trip Name, User (FK), Total Days, Selected Destinations (M2M with ordering and specific stay duration per place), Selected Hotel Category, Selected Activities, Selected Transportation, Total Calculated Price.
+- CustomQuotationRequest: User (FK), Desired Route/Locations, Travellers Count (Adults, Children, Infants), Budget, Notes, Admin Quoted Price, Admin Notes, Status (`PENDING`, `QUOTED`, `ACCEPTED`, `REJECTED`).
+- Booking: Unique Booking ID (`TRV-YYYY-XXXXX`), User (FK), Package (FK, optional), Custom Trip (FK, optional), Travel Date, Return Date, Travellers Count, Total Cost, Status (`PENDING`, `CONFIRMED`, `TRIP_STARTED`, `COMPLETED`, `CANCELLED`).
+- StandaloneTicket: User (FK), Type (`BUS`, `FLIGHT`), Origin, Destination, Travel Date, Passenger Count, Price, Status, Ticket Document File.
+- Payment: Booking (FK), Payment Option (`FULL`, `PARTIAL_30`), Payment Gateway/Method (`ESEWA`, `KHALTI`, `BANK_TRANSFER`), Transaction Ref, Payment Receipt Image, Verification Status (`PENDING`, `APPROVED`, `REJECTED`).
+
+---
+
+## Feature Requirements & Page Flows
+
+### 1. Homepage & Public Portal (`/`)
+- Navbar: Logo, Home, Inside Country, Outside Country, Packages, Build My Trip, Contact, Login, Sign Up.
+- Hero Banner: Interactive Search Form (Destination, Travel Date, Travellers) built with HTMX.
+- Featured Grid: Categorized cards for Inside Country (e.g., Sauraha, Chitwan, Pokhara, Kathmandu) and Outside Country (e.g., Dubai, Thailand, India) displaying main image, starting price, and badges.
+- Footer: Quick links, contact info, social links, terms, and policies.
+
+### 2. User Authentication (`/accounts/`)
+- User Registration, Login, Logout, Profile Edit using Django default forms and session management.
+- Redirect users to `User Dashboard` upon successful login.
+
+### 3. Destination Detail & Predefined Package Page (`/destinations/<slug>/`)
+- Visual Gallery (Bootstrap Carousel / Grid).
+- Information Sections: Description, Rules & Regulations, Best Travel Season, Activity Checklists.
+- Package Selector: Toggle between Single, Couple, and Family packages.
+- Dynamic Duration Calculator (HTMX): User enters or increments travel days (e.g., 5 days, 7 days, 10 days). HTMX posts the inputs to a Django view, which calculates the per-day incremented total cost and updates the Price Breakdown Card live without reloading.
+
+### 4. Interactive "Build My Trip" Custom Package Builder ⭐ (`/builder/`)
+- Multi-Destination Route Selector: User can add multiple locations in one itinerary (e.g., Kathmandu → Chitwan → Sauraha → Kathmandu).
+- Dynamic Day Allocator: Set specific days for each selected destination. System auto-calculates total trip duration.
+- Component Customizer:
+  - Hotel Category dropdown (Budget, 3-Star, Luxury).
+  - Activity checkboxes per destination (Jungle Safari, Canoe Ride, Cable Car).
+  - Transport options per route segment (Tourist Bus, Private Car, Flight).
+  - Travellers Count: Adults, Children, Infants.
+- Live Pricing Calculation Breakdown: Real-time update showing itemized costs (Hotel + Transport + Activities + Taxes/Service Fees = Estimated Total).
+- Action: User can directly book or convert this into a saved custom trip.
+
+### 5. Custom Quotation Request (`/quotation/request/`)
+- Form for complex non-standard requirements (special dietary needs, specific routes, target budget).
+- Submits request to Admin for manual review and pricing quotation.
+
+### 6. Online Booking & Checkout (`/booking/checkout/`)
+- Form collecting traveler details, emergency contact, and travel dates.
+- Payment Gateway Options: Full Payment vs. 30% Partial Advance.
+- Payment Methods: eSewa, Khalti, Bank Transfer (with image upload for deposit voucher).
+- Generates Unique Booking Reference ID (`TRV-2026-XXXXX`).
+
+### 7. Standalone Ticket Booking System (`/tickets/`)
+- Search and book standalone Bus or Domestic/International Flight tickets.
+- Admin-managed schedule and ticket availability.
+
+### 8. User Dashboard (`/dashboard/`)
+- Navigation sidebar: Overview, Build My Trip, My Bookings, My Custom Trips, Quotation Inbox, My Tickets, Digital Itineraries, Saved Wishlist, Profile Settings.
+- Dynamic Booking Timeline Tracker: Visual progress bar showing steps (`Request Received` → `Payment Verified` → `Hotel/Transport Confirmed` → `Itinerary Ready` → `Trip Completed`).
+- Digital Itinerary Generator: Auto-generates a printable/downloadable Day-by-Day itinerary schedule upon booking confirmation.
+
+### 9. Custom Web Admin Panel (`/dashboard/admin/`)
+- Analytics Dashboard: Cards displaying Total Revenue, Total Bookings, Pending Requests, Monthly Charts.
+- Destination Manager: CRUD operations for destinations, uploading main images and gallery items to `MEDIA_ROOT`.
+- Dynamic Pricing & Rule Engine: Set per-day adult/child rates, peak season multipliers, and activity charges.
+- Package & Hotel Manager: Manage ready-made packages, hotel tiers, and route costs.
+- Custom Quote Processor: Review user custom trip requests, input custom prices ($रु$), generate structured itineraries, and send quotes directly to the user dashboard.
+- Booking & Payment Approver: Verify uploaded payment vouchers, mark transactions as Approved/Paid, and issue confirmed e-tickets/itineraries.
+
+---
+
+## Coding Instructions for Cursor AI
+1. Create a clean Django project structure:
+   - Config directory: `core/`
+   - Apps: `apps/accounts`, `apps/destinations`, `apps/packages`, `apps/custom_trips`, `apps/bookings`, `apps/payments`
+2. Configure `settings.py`:
+   - Set `MEDIA_URL = '/media/'` and `MEDIA_ROOT = BASE_DIR / 'media'`.
+   - Configure template directories and session auth settings.
+3. Templates & Static Files:
+   - Base template `templates/base.html` containing Bootstrap 5 CDN and HTMX CDN script.
+   - Clean, modern, responsive UI with CSS card layouts, hover effects, and accessible forms.
+4. URLs & Views:
+   - Ensure clean routing using standard Django `urls.py`.
+   - Use Django Messages framework (`django.contrib.messages`) for flash alerts (e.g., "Booking Confirmed", "Quote Submitted").
+5. Database Seeding:
+   - Create a management command (`python manage.py seed_data`) to populate initial dummy destinations (Sauraha, Chitwan, Pokhara, Dubai, Thailand), hotel options, and sample predefined packages so the system is immediately testable upon startup."

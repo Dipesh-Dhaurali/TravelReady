@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}About Us - TravelReady{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="position-relative py-5 text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);">
+    <div class="container py-5 text-center">
+        <span class="tr-badge tr-badge-primary mb-3 text-uppercase" style="letter-spacing: 1px; font-size: 0.75rem;">Our Story</span>
+        <h1 class="display-4 fw-bold font-playfair mb-3">Redefining How You Experience The World</h1>
+        <p class="text-white-50 mx-auto" style="max-width: 650px; font-size: 1.15rem; line-height: 1.7;">
+            We believe travel is not just about visiting places—it's about the stories, the people you meet, and the memories that stay with you forever.
+        </p>
+    </div>
+</div>
+
+<!-- Mission & Vision -->
+<div class="container py-5">
+    <div class="row g-5 align-items-center mb-5">
+        <div class="col-lg-6">
+            <span class="text-primary fw-bold text-uppercase" style="font-size: 0.8rem; letter-spacing: 1.5px;">Who We Are</span>
+            <h2 class="fw-bold font-playfair mb-3 mt-1" style="font-size: 2.2rem; color: #0f172a;">Crafting Seamless Adventures Across Nepal & Beyond</h2>
+            <p class="text-muted" style="line-height: 1.8;">
+                Founded with a deep love for exploration, <strong>TravelReady</strong> provides travelers with intuitive digital planning tools, handpicked accommodations, and expert-guided itineraries. Whether you're seeking a soul-stirring trek through the Himalayas or a relaxing tropical escape abroad, we simplify every step of your journey.
+            </p>
+            <div class="row g-3 mt-3">
+                <div class="col-sm-6">
+                    <div class="p-3 rounded-3" style="background: #f8fafc; border-left: 4px solid #4f46e5;">
+                        <h6 class="fw-bold mb-1">Tailored Itineraries</h6>
+                        <p class="text-muted small mb-0">Customized day-by-day routes matching your pace and preferences.</p>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="p-3 rounded-3" style="background: #f8fafc; border-left: 4px solid #10b981;">
+                        <h6 class="fw-bold mb-1">Transparent Pricing</h6>
+                        <p class="text-muted small mb-0">No hidden fees, real-time fee breakdowns, and verified vendor rates.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="row g-3">
+                <div class="col-6">
+                    <div class="p-4 rounded-4 text-center shadow-sm" style="background: linear-gradient(135deg, #eef2ff, #f8fafc); border: 1px solid #e0e7ff;">
+                        <div class="display-5 fw-bold text-primary mb-1">10k+</div>
+                        <div class="text-muted small fw-semibold">Happy Travelers</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-4 rounded-4 text-center shadow-sm" style="background: linear-gradient(135deg, #ecfdf5, #f8fafc); border: 1px solid #d1fae5;">
+                        <div class="display-5 fw-bold text-success mb-1">150+</div>
+                        <div class="text-muted small fw-semibold">Destinations</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-4 rounded-4 text-center shadow-sm" style="background: linear-gradient(135deg, #fffbeb, #f8fafc); border: 1px solid #fef3c7;">
+                        <div class="display-5 fw-bold text-warning mb-1">99.4%</div>
+                        <div class="text-muted small fw-semibold">Positive Rating</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-4 rounded-4 text-center shadow-sm" style="background: linear-gradient(135deg, #fdf2f8, #f8fafc); border: 1px solid #fce7f3;">
+                        <div class="display-5 fw-bold text-danger mb-1">24/7</div>
+                        <div class="text-muted small fw-semibold">Local Support</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Values -->
+    <div class="my-5 py-4 border-top">
+        <div class="text-center mb-5">
+            <span class="text-primary fw-bold text-uppercase" style="font-size: 0.8rem; letter-spacing: 1px;">Our Pillars</span>
+            <h3 class="fw-bold font-playfair mt-1">Why Travelers Choose TravelReady</h3>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="p-4 rounded-4 h-100 shadow-sm" style="background: white; border: 1px solid #e2e8f0;">
+                    <div style="width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #4f46e5, #818cf8); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.3rem; margin-bottom: 1.25rem;">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Verified Reliability</h5>
+                    <p class="text-muted small mb-0" style="line-height: 1.7;">Every hotel, vehicle, and trek guide in our system is vetted for quality and safety standards.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 rounded-4 h-100 shadow-sm" style="background: white; border: 1px solid #e2e8f0;">
+                    <div style="width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #10b981, #34d399); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.3rem; margin-bottom: 1.25rem;">
+                        <i class="bi bi-lightning-charge"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Real-Time Booking & Tracking</h5>
+                    <p class="text-muted small mb-0" style="line-height: 1.7;">From booking confirmations to day-by-day digital itineraries and flight tickets, everything lives in your dashboard.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 rounded-4 h-100 shadow-sm" style="background: white; border: 1px solid #e2e8f0;">
+                    <div style="width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #f59e0b, #fbbf24); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.3rem; margin-bottom: 1.25rem;">
+                        <i class="bi bi-heart-pulse"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Passion for Local Tourism</h5>
+                    <p class="text-muted small mb-0" style="line-height: 1.7;">We support local community homestays and ethical trekking practices across Nepal.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

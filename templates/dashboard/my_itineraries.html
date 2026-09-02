@@ -1,0 +1,74 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Digital Itineraries - TravelReady{% endblock %}
+{% block dashboard_page_title %}Digital Itineraries{% endblock %}
+
+{% block dashboard_content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <p class="text-muted mb-0" style="font-size:0.9rem;">Access and download your travel documents and itineraries</p>
+</div>
+
+{% if itineraries %}
+<div class="d-flex flex-column gap-3">
+    {% for itin in itineraries %}
+    <div class="tr-booking-card animate-fadeInUp">
+        <div class="d-flex flex-wrap gap-4 align-items-start justify-content-between">
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#d97706,#fbbf24);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="bi bi-journal-text" style="color:white;"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0" style="font-size:1rem;">{{ itin.title|default:"Travel Itinerary" }}</h5>
+                        <span style="font-size:0.75rem;color:#94a3b8;">Generated {{ itin.created_at|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-3 mb-2">
+                    {% if itin.booking %}
+                    <span style="font-size:0.82rem;color:#64748b;"><i class="bi bi-hash me-1"></i>{{ itin.booking.booking_id }}</span>
+                    <span style="font-size:0.82rem;color:#64748b;"><i class="bi bi-calendar3 me-1"></i>{{ itin.booking.travel_date|date:"M d, Y" }}</span>
+                    {% endif %}
+                    {% if itin.destination %}<span style="font-size:0.82rem;color:#64748b;"><i class="bi bi-geo-alt me-1"></i>{{ itin.destination }}</span>{% endif %}
+                    <span style="font-size:0.82rem;color:#64748b;"><i class="bi bi-clock me-1"></i>{{ itin.num_days|default:"" }} Days</span>
+                </div>
+
+                <!-- Itinerary Days Preview -->
+                {% if itin.days.all %}
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                    {% for day in itin.days.all|slice:":4" %}
+                    <span style="background:#eef2ff;color:#4f46e5;padding:0.25rem 0.75rem;border-radius:100px;font-size:0.75rem;font-weight:600;">
+                        Day {{ day.day_number }}: {{ day.title|truncatechars:25 }}
+                    </span>
+                    {% endfor %}
+                    {% if itin.days.count > 4 %}
+                    <span style="background:#f1f5f9;color:#64748b;padding:0.25rem 0.75rem;border-radius:100px;font-size:0.75rem;">+{{ itin.days.count|add:"-4" }} more days</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex flex-column gap-2 align-items-end">
+                {% if itin.booking %}
+                <a href="{% url 'bookings:download_itinerary' itin.booking.id %}" class="tr-btn tr-btn-primary tr-btn-sm" target="_blank">
+                    <i class="bi bi-download"></i> Download PDF
+                </a>
+                <a href="{% url 'bookings:booking_detail' itin.booking.id %}" class="tr-btn tr-btn-secondary tr-btn-sm">
+                    <i class="bi bi-eye"></i> Booking Details
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="tr-empty-state">
+    <div class="empty-icon"><i class="bi bi-journal-text"></i></div>
+    <h4>No Itineraries Yet</h4>
+    <p>Your digital itineraries will appear here once your bookings are confirmed. They contain all your travel details and day-by-day plans.</p>
+    <a href="{% url 'dashboard:my_bookings' %}" class="tr-btn tr-btn-primary">
+        <i class="bi bi-calendar-check me-2"></i>View My Bookings
+    </a>
+</div>
+{% endif %}
+{% endblock %}

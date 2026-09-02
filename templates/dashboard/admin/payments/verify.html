@@ -1,0 +1,190 @@
+{% extends 'dashboard/base_admin.html' %}
+{% load static %}
+
+{% block title %}Verify Payment {{ payment.payment_ref }} - TravelReady Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Payment Verification</h1>
+        <div class="page-subtitle">Review receipt and verify payment: <strong>{{ payment.payment_ref }}</strong></div>
+    </div>
+    <a href="{% url 'dashboard:admin_payments' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Payments
+    </a>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-9">
+        <!-- Payment Details -->
+        <div class="admin-card mb-4">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title"><i class="bi bi-receipt me-2 text-primary"></i>Payment Details</h5>
+                {% if payment.verification_status == 'APPROVED' %}
+                    <span class="badge bg-success fs-6">Approved</span>
+                {% elif payment.verification_status == 'REJECTED' %}
+                    <span class="badge bg-danger fs-6">Rejected</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark fs-6">Pending Verification</span>
+                {% endif %}
+            </div>
+            <div class="p-4">
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Payment Reference</label>
+                        <div class="fw-bold fs-6 text-primary">{{ payment.payment_ref }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Customer</label>
+                        <div class="fw-semibold">{{ payment.user.get_full_name|default:payment.user.username }}</div>
+                        <div class="text-muted small">{{ payment.user.email }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Amount</label>
+                        <div class="fw-bold fs-4 text-success">Rs. {{ payment.amount }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Date & Time</label>
+                        <div class="fw-semibold">{{ payment.created_at|date:"F d, Y H:i" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Payment Method</label>
+                        <div class="fw-semibold">
+                            {% if payment.payment_method == 'ESEWA' %}
+                                <i class="bi bi-wallet2 text-success me-1"></i>
+                            {% elif payment.payment_method == 'KHALTI' %}
+                                <i class="bi bi-cash text-info me-1"></i>
+                            {% else %}
+                                <i class="bi bi-bank text-secondary me-1"></i>
+                            {% endif %}
+                            {{ payment.get_payment_method_display }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Payment Option</label>
+                        <div>
+                            {% if payment.payment_option == 'FULL' %}
+                                <span class="badge bg-primary fs-6">Full Payment</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark fs-6">30% Partial</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Related To</label>
+                        <div class="fw-semibold">
+                            {% if payment.booking %}
+                                <i class="bi bi-journal-check me-1 text-primary"></i>Booking: {{ payment.booking.booking_id }}
+                            {% elif payment.ticket %}
+                                <i class="bi bi-ticket-perforated me-1 text-info"></i>Ticket: {{ payment.ticket.ticket_number }}
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if payment.transaction_ref %}
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Transaction Ref</label>
+                        <div class="fw-semibold">{{ payment.transaction_ref }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if payment.payment_method == 'BANK_TRANSFER' %}
+                <div class="card bg-light border-0 mb-4">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3"><i class="bi bi-bank me-2"></i>Bank Transfer Details</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small text-uppercase fw-bold">Bank Name</label>
+                                <div class="fw-semibold">{{ payment.bank_name|default:"—" }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small text-uppercase fw-bold">Account Number</label>
+                                <div class="fw-semibold">{{ payment.bank_account_number|default:"—" }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small text-uppercase fw-bold">Depositor Name</label>
+                                <div class="fw-semibold">{{ payment.depositor_name|default:"—" }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small text-uppercase fw-bold">Deposit Date</label>
+                                <div class="fw-semibold">{{ payment.deposit_date|date:"F d, Y"|default:"—" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if payment.payment_receipt %}
+                <div class="mb-2">
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-3">Payment Receipt Screenshot</label>
+                    <div class="border rounded-3 overflow-hidden" style="max-width: 520px;">
+                        <a href="{{ payment.payment_receipt.url }}" target="_blank" class="d-block">
+                            <img src="{{ payment.payment_receipt.url }}" alt="Payment Receipt" class="img-fluid w-100" style="max-height: 380px; object-fit: contain; background: #f8f9fa;">
+                        </a>
+                    </div>
+                    <div class="text-muted small mt-2">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>Click to view full size in new tab
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-warning border-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>No receipt image uploaded for this payment.
+                </div>
+                {% endif %}
+
+                {% if payment.verified_by %}
+                <div class="card bg-success bg-opacity-10 border-0 mt-4">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-2 text-success"><i class="bi bi-person-check me-2"></i>Verified By</h6>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <small class="text-muted">Admin</small>
+                                <div class="fw-semibold">{{ payment.verified_by.get_full_name|default:payment.verified_by.username }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">Verified At</small>
+                                <div class="fw-semibold">{{ payment.verified_at|date:"F d, Y H:i" }}</div>
+                            </div>
+                            {% if payment.admin_remarks %}
+                            <div class="col-12 mt-2">
+                                <small class="text-muted">Remarks</small>
+                                <div class="mt-1 p-2 bg-white rounded border">{{ payment.admin_remarks }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if payment.verification_status == 'PENDING' %}
+        <!-- Verification Action -->
+        <div class="admin-card border-warning" style="border-top: 4px solid #f59e0b !important;">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title text-warning"><i class="bi bi-shield-check me-2"></i>Verification Action</h5>
+            </div>
+            <div class="p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="admin_remarks" class="form-label fw-semibold">Admin Remarks <span class="text-muted fw-normal">(optional)</span></label>
+                        <textarea class="form-control" id="admin_remarks" name="admin_remarks" rows="3" placeholder="Add remarks about this payment verification..."></textarea>
+                    </div>
+                    <div class="d-flex gap-3 flex-wrap">
+                        <button type="submit" name="action" value="verify" class="btn btn-success btn-lg flex-fill">
+                            <i class="bi bi-check-circle-fill me-2"></i> Approve Payment
+                        </button>
+                        <button type="submit" name="action" value="reject" class="btn btn-danger btn-lg flex-fill">
+                            <i class="bi bi-x-circle-fill me-2"></i> Reject Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

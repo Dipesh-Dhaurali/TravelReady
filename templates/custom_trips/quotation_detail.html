@@ -1,0 +1,163 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Quotation Request #{{ quotation.id }} - TravelReady{% endblock %}
+{% block dashboard_page_title %}Quotation Request #{{ quotation.id }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+        <div>
+            <h2><i class="bi bi-envelope-paper"></i> Quotation Request #{{ quotation.id }}</h2>
+            <div class="mt-2">
+                {% if quotation.status == 'PENDING' %}
+                    <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> {{ quotation.get_status_display }}</span>
+                {% elif quotation.status == 'QUOTED' %}
+                    <span class="badge bg-info"><i class="bi bi-check2-circle"></i> {{ quotation.get_status_display }}</span>
+                {% elif quotation.status == 'ACCEPTED' %}
+                    <span class="badge bg-success"><i class="bi bi-check-lg"></i> {{ quotation.get_status_display }}</span>
+                {% else %}
+                    <span class="badge bg-danger"><i class="bi bi-x-lg"></i> {{ quotation.get_status_display }}</span>
+                {% endif %}
+                <span class="text-muted ms-2 small">Submitted: {{ quotation.created_at|date:"F d, Y" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-file-earmark-text"></i> Your Request Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="text-muted small">Travelers</div>
+                            <div class="fw-bold">{{ quotation.adults }} Adults, {{ quotation.children }} Children, {{ quotation.infants }} Infants</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small">Preferred Travel Date</div>
+                            <div class="fw-bold">{{ quotation.travel_date|default:"Not specified"|date:"F d, Y" }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small">Budget Range</div>
+                            <div class="fw-bold">{% if quotation.budget %}Rs. {{ quotation.budget }}{% else %}Not specified{% endif %}</div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold">Desired Route</h6>
+                    <div class="bg-light rounded p-3 mb-4">
+                        {{ quotation.desired_route|linebreaks }}
+                    </div>
+
+                    {% if quotation.notes %}
+                        <h6 class="fw-bold">Special Requirements / Notes</h6>
+                        <div class="bg-light rounded p-3">
+                            {{ quotation.notes|linebreaks }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if quotation.status == 'QUOTED' or quotation.status == 'ACCEPTED' or quotation.status == 'REJECTED' %}
+                <div class="card mb-4 border-{% if quotation.status == 'REJECTED' %}danger{% else %}success{% endif %}">
+                    <div class="card-header bg-{% if quotation.status == 'REJECTED' %}danger{% else %}success{% endif %} text-white">
+                        <h5 class="mb-0"><i class="bi bi-reply-fill"></i> Agent Response</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if quotation.status == 'QUOTED' or quotation.status == 'ACCEPTED' %}
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <div class="text-muted small">Quoted Price</div>
+                                    <div class="fw-bold fs-3 text-success">Rs. {{ quotation.admin_quoted_price }}</div>
+                                </div>
+                            </div>
+
+                            {% if quotation.admin_notes %}
+                                <h6 class="fw-bold"><i class="bi bi-chat-dots"></i> Agent Notes</h6>
+                                <div class="bg-light rounded p-3 mb-4">
+                                    {{ quotation.admin_notes|linebreaks }}
+                                </div>
+                            {% endif %}
+
+                            {% if quotation.generated_itinerary %}
+                                <h6 class="fw-bold"><i class="bi bi-signpost-split"></i> Proposed Itinerary</h6>
+                                <div class="bg-light rounded p-3">
+                                    {{ quotation.generated_itinerary|linebreaks }}
+                                </div>
+                            {% endif %}
+                        {% elif quotation.status == 'REJECTED' %}
+                            <div class="text-center py-3">
+                                <i class="bi bi-x-circle-fill display-4 text-danger mb-3"></i>
+                                <h5 class="text-danger">Request Declined</h5>
+                                {% if quotation.admin_notes %}
+                                    <p class="text-muted mt-3">{{ quotation.admin_notes }}</p>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="sticky-top" style="top: 1rem;">
+                {% if quotation.status == 'QUOTED' %}
+                    <div class="card shadow border-success mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="bi bi-hand-thumbs-up"></i> Quotation Ready</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="text-muted small mb-1">Quoted Price</div>
+                            <div class="fw-bold fs-2 text-success mb-3">Rs. {{ quotation.admin_quoted_price }}</div>
+                            <p class="text-muted small mb-4">Ready to proceed? Accept this quotation to start booking.</p>
+                            <div class="d-grid gap-2">
+                                <form method="post" action="{% url 'custom_trips:quotation_accept' quotation.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-lg w-100">
+                                        <i class="bi bi-check-lg"></i> Accept Quotation
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'custom_trips:quotation_decline' quotation.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger w-100">
+                                        <i class="bi bi-x-lg"></i> Decline
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% elif quotation.status == 'PENDING' %}
+                    <div class="card shadow mb-4">
+                        <div class="card-body text-center py-5">
+                            <div class="spinner-border text-warning mb-3" style="width: 3rem; height: 3rem;"></div>
+                            <h5 class="text-warning">Awaiting Review</h5>
+                            <p class="text-muted mt-2">Our travel agent is reviewing your request. You'll hear from us within 24 hours.</p>
+                        </div>
+                    </div>
+                {% elif quotation.status == 'ACCEPTED' %}
+                    <div class="card shadow border-success mb-4">
+                        <div class="card-body text-center py-4">
+                            <i class="bi bi-check-circle-fill display-4 text-success mb-3"></i>
+                            <h5 class="text-success">Quotation Accepted!</h5>
+                            <p class="text-muted mt-2">Proceed to booking to confirm your trip.</p>
+                            <a href="{% url 'bookings:checkout' %}?quotation={{ quotation.pk }}" class="btn btn-success mt-2">
+                                <i class="bi bi-cart-check"></i> Proceed to Booking
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="list-group">
+                    <a href="{% url 'custom_trips:my_trips' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-arrow-left"></i> Back to My Trips
+                    </a>
+                    <a href="{% url 'custom_trips:quotation_request' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-plus-circle"></i> Submit Another Request
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

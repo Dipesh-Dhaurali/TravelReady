@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}Tour Packages - TravelReady{% endblock %}
+
+{% block content %}
+<!-- Packages Hero Section -->
+<div class="position-relative py-5" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%); color: white;">
+    <div class="container py-4 text-center">
+        <span class="tr-badge tr-badge-primary mb-3 text-uppercase" style="letter-spacing:1px;font-size:0.75rem;">All-Inclusive Journeys</span>
+        <h1 class="display-4 fw-bold mb-3 font-playfair">Handcrafted Tour Packages</h1>
+        <p class="text-white-50 mx-auto mb-0" style="max-width: 600px; font-size: 1.1rem;">
+            Carefully curated itineraries designed for comfort, adventure, and unforgettable memories with 24/7 dedicated local assistance.
+        </p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- Filter Navigation Bar -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-5 p-3 rounded-4 shadow-sm" style="background: #ffffff; border: 1px solid var(--tr-gray-200);">
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'packages:package_list' %}"
+               class="btn btn-sm {% if not request.GET.filter and not request.GET.type %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+               style="border-radius: 100px; padding: 0.4rem 1.1rem; font-weight: 600;">
+                All Packages
+            </a>
+            <a href="{% url 'packages:package_list' %}?filter=popular"
+               class="btn btn-sm {% if request.GET.filter == 'popular' %}btn-warning text-dark fw-bold{% else %}btn-outline-secondary{% endif %}"
+               style="border-radius: 100px; padding: 0.4rem 1.1rem; font-weight: 600;">
+                <i class="bi bi-fire text-danger me-1"></i> Most Popular
+            </a>
+            <a href="{% url 'packages:package_list' %}?type=SINGLE"
+               class="btn btn-sm {% if request.GET.type == 'SINGLE' %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+               style="border-radius: 100px; padding: 0.4rem 1.1rem; font-weight: 600;">
+                <i class="bi bi-person me-1"></i> Solo
+            </a>
+            <a href="{% url 'packages:package_list' %}?type=COUPLE"
+               class="btn btn-sm {% if request.GET.type == 'COUPLE' %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+               style="border-radius: 100px; padding: 0.4rem 1.1rem; font-weight: 600;">
+                <i class="bi bi-heart me-1"></i> Couple
+            </a>
+            <a href="{% url 'packages:package_list' %}?type=FAMILY"
+               class="btn btn-sm {% if request.GET.type == 'FAMILY' %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+               style="border-radius: 100px; padding: 0.4rem 1.1rem; font-weight: 600;">
+                <i class="bi bi-people me-1"></i> Family
+            </a>
+        </div>
+
+        {% if destination_list %}
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-radius: 100px; padding: 0.4rem 1.2rem;">
+                <i class="bi bi-geo-alt me-1"></i> Filter by Destination
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px; max-height: 280px; overflow-y: auto;">
+                <li><a class="dropdown-item" href="{% url 'packages:package_list' %}">All Destinations</a></li>
+                <li><hr class="dropdown-divider"></li>
+                {% for d in destination_list %}
+                <li><a class="dropdown-item" href="{% url 'packages:package_list' %}?destination={{ d.slug }}">{{ d.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if packages %}
+    <div class="row g-4">
+        {% for pkg in packages %}
+        <div class="col-lg-4 col-md-6 animate-fadeInUp">
+            <div class="tr-card h-100 d-flex flex-column">
+                <div class="card-img-wrapper position-relative" style="height: 220px; overflow: hidden;">
+                    {% if pkg.thumbnail %}
+                    <img src="{{ pkg.thumbnail.url }}" class="card-img-top w-100 h-100" style="object-fit: cover; transition: transform 0.4s ease;" alt="{{ pkg.title }}">
+                    {% else %}
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #f1f5f9, #e2e8f0);">
+                        <i class="bi bi-compass text-muted" style="font-size: 3rem;"></i>
+                    </div>
+                    {% endif %}
+
+                    <!-- Popular Ribbon -->
+                    {% if pkg.is_popular %}
+                    <div class="position-absolute top-0 end-0 m-3">
+                        <span class="badge bg-warning text-dark px-2.5 py-1.5 shadow-sm fw-bold" style="border-radius: 6px; font-size: 0.75rem;">
+                            <i class="bi bi-star-fill text-dark me-1"></i> POPULAR
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    <!-- Type Badge -->
+                    <div class="position-absolute top-0 start-0 m-3">
+                        <span class="tr-badge tr-badge-primary shadow-sm">
+                            <span class="tr-badge-dot"></span> {{ pkg.get_package_type_display }}
+                        </span>
+                    </div>
+
+                    <!-- Days Pill at Bottom Right of Image -->
+                    <div class="position-absolute bottom-0 end-0 m-3">
+                        <span class="badge bg-dark bg-opacity-75 text-white px-2 py-1 shadow-sm" style="backdrop-filter: blur(4px); font-size: 0.75rem;">
+                            <i class="bi bi-clock me-1"></i>{{ pkg.base_days }} Days
+                        </span>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 d-flex flex-column flex-grow-1">
+                    <p class="text-muted small mb-1">
+                        <a href="{% url 'destinations:destination_detail' pkg.destination.slug %}" class="text-decoration-none text-muted fw-semibold">
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ pkg.destination.name }}
+                        </a>
+                    </p>
+
+                    <h5 class="fw-bold mb-2 text-dark">{{ pkg.title }}</h5>
+
+                    <!-- Included Activities Pills -->
+                    {% if pkg.included_activities.all %}
+                    <div class="mb-3">
+                        <div class="d-flex flex-wrap gap-1">
+                            {% for act in pkg.included_activities.all|slice:":3" %}
+                            <span class="badge bg-light text-secondary border small" style="font-weight: 500; font-size: 0.75rem;">
+                                {{ act.title }}
+                            </span>
+                            {% endfor %}
+                            {% if pkg.included_activities.count > 3 %}
+                            <span class="badge bg-light text-muted border small" style="font-size: 0.75rem;">+{{ pkg.included_activities.count|add:"-3" }} more</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between align-items-end pt-3 mt-auto border-top">
+                        <div>
+                            <span class="text-muted" style="font-size: 0.75rem; text-transform: uppercase;">Starting from</span>
+                            <div class="fw-bold fs-5 text-dark">Rs. {{ pkg.base_price }}</div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'packages:package_detail' pkg.slug %}" class="tr-btn tr-btn-secondary tr-btn-sm">
+                                View
+                            </a>
+                            <a href="{% url 'packages:package_book' pkg.slug %}" class="tr-btn tr-btn-primary tr-btn-sm">
+                                Book Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="tr-empty-state my-5 py-5 text-center">
+        <div class="empty-icon mb-3" style="width: 70px; height: 70px; border-radius: 50%; background: #f1f5f9; display: inline-flex; align-items: center; justify-content: center;">
+            <i class="bi bi-briefcase text-muted" style="font-size: 2rem;"></i>
+        </div>
+        <h4 class="fw-bold">No packages found</h4>
+        <p class="text-muted">We couldn't find any tour packages matching your current selection.</p>
+        <a href="{% url 'packages:package_list' %}" class="tr-btn tr-btn-primary mt-2">
+            Clear Filters
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

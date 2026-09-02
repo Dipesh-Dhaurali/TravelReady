@@ -1,0 +1,115 @@
+{% extends 'dashboard/base_admin.html' %}
+{% load static %}
+
+{% block title %}Manage Bookings - TravelReady Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Customer Bookings</h1>
+        <div class="page-subtitle">View and manage all customer travel bookings.</div>
+    </div>
+</div>
+
+<!-- Status Filter Tabs -->
+<div class="admin-card mb-3 p-0">
+    <div class="px-4 py-3 border-bottom">
+        <ul class="nav nav-pills gap-2" role="tablist">
+            <li class="nav-item">
+                <a href="?status=ALL" class="nav-link px-4 {% if not status_filter or status_filter == 'ALL' %}active{% endif %}">
+                    <i class="bi bi-list me-1"></i> All Bookings
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="?status=PENDING" class="nav-link px-4 {% if status_filter == 'PENDING' %}active{% endif %}">
+                    <i class="bi bi-clock me-1"></i> Pending
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="?status=CONFIRMED" class="nav-link px-4 {% if status_filter == 'CONFIRMED' %}active{% endif %}">
+                    <i class="bi bi-check-circle me-1"></i> Confirmed
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="?status=CANCELLED" class="nav-link px-4 {% if status_filter == 'CANCELLED' %}active{% endif %}">
+                    <i class="bi bi-x-circle me-1"></i> Cancelled
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="ps-4">Booking ID</th>
+                    <th>Customer</th>
+                    <th>Travel Date</th>
+                    <th>Travelers</th>
+                    <th>Total Cost</th>
+                    <th>Status</th>
+                    <th>Payment</th>
+                    <th class="pe-4 text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td class="ps-4">
+                        <span class="fw-bold text-primary">{{ booking.booking_id }}</span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold" style="width:34px;height:34px;font-size:.85rem;">
+                                {{ booking.user.username|first|upper }}
+                            </div>
+                            <div>
+                                <div class="fw-semibold">{{ booking.user.get_full_name|default:booking.user.username }}</div>
+                                <small class="text-muted">{{ booking.user.email }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ booking.travel_date|date:"M d, Y" }}</td>
+                    <td>
+                        <span class="fw-semibold">{{ booking.adults }}A</span> /
+                        <span class="text-muted">{{ booking.children }}C</span>
+                    </td>
+                    <td class="fw-bold">Rs. {{ booking.total_cost }}</td>
+                    <td>
+                        {% if booking.status == 'PENDING' %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% elif booking.status == 'CONFIRMED' %}
+                            <span class="badge bg-success">Confirmed</span>
+                        {% elif booking.status == 'TRIP_STARTED' %}
+                            <span class="badge bg-primary">In Progress</span>
+                        {% elif booking.status == 'COMPLETED' %}
+                            <span class="badge bg-secondary">Completed</span>
+                        {% else %}
+                            <span class="badge bg-danger">Cancelled</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if booking.payment_verified %}
+                            <span class="text-success" title="Payment Verified"><i class="bi bi-check-circle-fill fs-5"></i></span>
+                        {% else %}
+                            <span class="text-muted" title="Not Verified"><i class="bi bi-x-circle fs-5"></i></span>
+                        {% endif %}
+                    </td>
+                    <td class="pe-4 text-end">
+                        <a href="{% url 'dashboard:admin_booking_detail' booking.pk %}" class="btn btn-sm btn-outline-primary rounded-2">
+                            <i class="bi bi-eye me-1"></i> View Details
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">No bookings found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

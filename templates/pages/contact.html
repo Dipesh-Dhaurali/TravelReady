@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Contact Us - TravelReady{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="position-relative py-5 text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);">
+    <div class="container py-5 text-center">
+        <span class="tr-badge tr-badge-primary mb-3 text-uppercase" style="letter-spacing: 1px; font-size: 0.75rem;">Get In Touch</span>
+        <h1 class="display-4 fw-bold font-playfair mb-3">We'd Love To Hear From You</h1>
+        <p class="text-white-50 mx-auto" style="max-width: 600px; font-size: 1.15rem; line-height: 1.7;">
+            Have questions about a trip, custom quotes, or group bookings? Our dedicated travel desk is here for you.
+        </p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-5">
+        <!-- Contact Form -->
+        <div class="col-lg-7">
+            <div class="p-4 p-md-5 rounded-4 shadow-sm" style="background: white; border: 1px solid #e2e8f0;">
+                <h3 class="fw-bold mb-2 font-playfair" style="color: #0f172a;">Send Us a Message</h3>
+                <p class="text-muted small mb-4">Fill in the details below and a travel advisor will respond within 24 hours.</p>
+
+                <form method="post" action="{% url 'destinations_home:contact_us' %}">
+                    {% csrf_token %}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small text-muted">Your Full Name *</label>
+                            <input type="text" name="name" class="form-control" required placeholder="e.g. John Doe" style="border-radius: 10px; padding: 0.7rem 1rem;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small text-muted">Your Email Address *</label>
+                            <input type="email" name="email" class="form-control" required placeholder="john@example.com" style="border-radius: 10px; padding: 0.7rem 1rem;">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-muted">Subject</label>
+                        <input type="text" name="subject" class="form-control" placeholder="e.g., Inquiry regarding Annapurna Circuit Package" style="border-radius: 10px; padding: 0.7rem 1rem;">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-muted">Your Message *</label>
+                        <textarea name="message" class="form-control" rows="5" required placeholder="Tell us what you need or ask any questions..." style="border-radius: 10px; padding: 0.7rem 1rem;"></textarea>
+                    </div>
+
+                    <button type="submit" class="tr-btn tr-btn-primary px-4 py-2.5 w-100 fw-bold">
+                        <i class="bi bi-send-fill me-2"></i> Send Inquiry Message
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Contact Info & Channels -->
+        <div class="col-lg-5">
+            <div class="d-flex flex-column gap-3 mb-4">
+                <div class="p-4 rounded-4 shadow-sm" style="background: white; border: 1px solid #e2e8f0;">
+                    <div class="d-flex gap-3 align-items-center">
+                        <div style="width: 46px; height: 46px; border-radius: 12px; background: #eef2ff; color: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                            <i class="bi bi-geo-alt-fill"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small fw-semibold text-uppercase">Main Headquarters</div>
+                            <div class="fw-bold text-dark">Thamel, Kathmandu, Nepal</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-4 shadow-sm" style="background: white; border: 1px solid #e2e8f0;">
+                    <div class="d-flex gap-3 align-items-center">
+                        <div style="width: 46px; height: 46px; border-radius: 12px; background: #ecfdf5; color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                            <i class="bi bi-telephone-fill"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small fw-semibold text-uppercase">Direct Phone & WhatsApp</div>
+                            <div class="fw-bold text-dark">+977 1 4423456 / +977 9801234567</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-4 shadow-sm" style="background: white; border: 1px solid #e2e8f0;">
+                    <div class="d-flex gap-3 align-items-center">
+                        <div style="width: 46px; height: 46px; border-radius: 12px; background: #fdf2f8; color: #db2777; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                            <i class="bi bi-envelope-fill"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small fw-semibold text-uppercase">Email Support</div>
+                            <div class="fw-bold text-dark">support@travelready.com</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-4 shadow-sm" style="background: white; border: 1px solid #e2e8f0;">
+                    <div class="d-flex gap-3 align-items-center">
+                        <div style="width: 46px; height: 46px; border-radius: 12px; background: #fffbeb; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                            <i class="bi bi-clock-fill"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small fw-semibold text-uppercase">Operating Hours</div>
+                            <div class="fw-bold text-dark">Sunday - Friday: 9:00 AM - 7:00 PM</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Trip Quick Banner -->
+            <div class="p-4 rounded-4 text-white position-relative overflow-hidden shadow" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
+                <h5 class="fw-bold mb-1">Looking for a tailored tour?</h5>
+                <p class="small text-white-50 mb-3">Build and calculate your custom itinerary with our online planner.</p>
+                <a href="{% url 'custom_trips:builder' %}" class="btn btn-light btn-sm fw-bold px-3 py-2" style="border-radius: 8px; color: #4f46e5;">
+                    <i class="bi bi-compass-fill me-1"></i> Open Trip Builder
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

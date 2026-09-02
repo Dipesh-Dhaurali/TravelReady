@@ -1,0 +1,139 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}My Bookings - TravelReady{% endblock %}
+{% block dashboard_page_title %}My Bookings{% endblock %}
+
+{% block dashboard_content %}
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <p class="text-muted mb-0" style="font-size:0.9rem;">Track and manage all your travel bookings</p>
+    </div>
+    <a href="{% url 'packages:package_list' %}" class="tr-btn tr-btn-primary tr-btn-sm">
+        <i class="bi bi-plus-circle"></i> Book New Trip
+    </a>
+</div>
+
+<!-- Filter Tabs -->
+<div class="mb-4 d-flex gap-2 flex-wrap">
+    <a href="?status=" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline-secondary{% endif %}" style="border-radius: 100px;">All</a>
+    <a href="?status=PENDING" class="btn btn-sm {% if status_filter == 'PENDING' %}btn-warning{% else %}btn-outline-secondary{% endif %}" style="border-radius: 100px;">Pending</a>
+    <a href="?status=CONFIRMED" class="btn btn-sm {% if status_filter == 'CONFIRMED' %}btn-success{% else %}btn-outline-secondary{% endif %}" style="border-radius: 100px;">Confirmed</a>
+    <a href="?status=TRIP_STARTED" class="btn btn-sm {% if status_filter == 'TRIP_STARTED' %}btn-info text-white{% else %}btn-outline-secondary{% endif %}" style="border-radius: 100px;">In Progress</a>
+    <a href="?status=COMPLETED" class="btn btn-sm {% if status_filter == 'COMPLETED' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" style="border-radius: 100px;">Completed</a>
+</div>
+
+{% if bookings %}
+<div class="d-flex flex-column gap-3">
+    {% for booking in bookings %}
+    <div class="tr-booking-card animate-fadeInUp">
+        <div class="d-flex flex-wrap gap-3 align-items-start">
+            <!-- Booking Info -->
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-2">
+                    <div>
+                        <span style="font-size:0.75rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Booking ID</span>
+                        <div style="font-weight:800;color:#4f46e5;font-size:1rem;">{{ booking.booking_id }}</div>
+                    </div>
+                    {% if booking.status == 'CONFIRMED' %}<span class="tr-badge tr-badge-success"><span class="tr-badge-dot"></span>Confirmed</span>
+                    {% elif booking.status == 'PENDING' %}<span class="tr-badge tr-badge-warning"><span class="tr-badge-dot"></span>Pending</span>
+                    {% elif booking.status == 'TRIP_STARTED' %}<span class="tr-badge tr-badge-info"><span class="tr-badge-dot"></span>In Progress</span>
+                    {% elif booking.status == 'COMPLETED' %}<span class="tr-badge tr-badge-secondary"><span class="tr-badge-dot"></span>Completed</span>
+                    {% else %}<span class="tr-badge tr-badge-danger"><span class="tr-badge-dot"></span>Cancelled</span>{% endif %}
+                </div>
+
+                <h5 class="fw-bold mb-1" style="font-size:1.05rem;">
+                    {% if booking.package %}{{ booking.package.title }}{% elif booking.custom_trip %}{{ booking.custom_trip.trip_name|default:"Custom Trip" }}{% else %}Travel Booking{% endif %}
+                </h5>
+
+                <div class="d-flex flex-wrap gap-3 mt-2">
+                    <span style="font-size:0.82rem;color:#64748b;"><i class="bi bi-calendar3 me-1"></i>{{ booking.travel_date|date:"F d, Y" }}</span>
+                    <span style="font-size:0.82rem;color:#64748b;"><i class="bi bi-people me-1"></i>{{ booking.num_adults|default:1 }} Adult{% if booking.num_adults > 1 %}s{% endif %}{% if booking.num_children %}, {{ booking.num_children }} Child{% if booking.num_children > 1 %}ren{% endif %}{% endif %}</span>
+                    {% if booking.package.destination %}<span style="font-size:0.82rem;color:#64748b;"><i class="bi bi-geo-alt me-1"></i>{{ booking.package.destination.name }}</span>{% endif %}
+                    <span style="font-size:0.82rem;color:#64748b;"><i class="bi bi-clock me-1"></i>Booked on {{ booking.created_at|date:"M d, Y" }}</span>
+                </div>
+            </div>
+
+            <!-- Price & Actions -->
+            <div class="text-end" style="min-width: 180px;">
+                <div style="font-size:0.75rem;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.25rem;">Total Amount</div>
+                <div style="font-size:1.5rem;font-weight:800;color:#0f172a;">Rs. {{ booking.total_cost }}</div>
+
+                {% if booking.payment_status %}
+                    {% if booking.payment_status == 'PAID' %}
+                        <span class="tr-badge tr-badge-success" style="font-size:0.7rem;"><span class="tr-badge-dot"></span>Paid</span>
+                    {% elif booking.payment_status == 'PARTIAL' %}
+                        <span class="tr-badge tr-badge-warning" style="font-size:0.7rem;"><span class="tr-badge-dot"></span>Partial</span>
+                    {% else %}
+                        <span class="tr-badge tr-badge-danger" style="font-size:0.7rem;"><span class="tr-badge-dot"></span>Unpaid</span>
+                    {% endif %}
+                {% endif %}
+
+                <div class="d-flex gap-2 justify-content-end mt-3 flex-wrap">
+                    <a href="{% url 'bookings:booking_detail' booking.id %}" class="tr-btn tr-btn-secondary tr-btn-sm">
+                        <i class="bi bi-eye"></i> View
+                    </a>
+                    {% if booking.status == 'PENDING' %}
+                    <a href="{% url 'payments:payment_page' booking.booking_id %}" class="tr-btn tr-btn-primary tr-btn-sm">
+                        <i class="bi bi-credit-card"></i> Pay Now
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'bookings:download_itinerary' booking.id %}" class="tr-btn tr-btn-secondary tr-btn-sm" title="Download Itinerary">
+                        <i class="bi bi-journal-text"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Bar for booking lifecycle -->
+        <div class="mt-3 pt-3" style="border-top: 1px solid var(--tr-gray-100);">
+            <div class="tr-progress-tracker">
+                <div class="step {% if booking.status in 'PENDING,CONFIRMED,TRIP_STARTED,COMPLETED' %}completed{% elif booking.status == 'PENDING' %}active{% endif %}">
+                    <div class="step-dot"><i class="bi bi-check-lg" style="font-size:0.65rem;"></i></div>
+                    <span class="step-label">Booked</span>
+                </div>
+                <div class="step {% if booking.status in 'CONFIRMED,TRIP_STARTED,COMPLETED' %}completed{% elif booking.status == 'CONFIRMED' %}active{% endif %}">
+                    <div class="step-dot"><i class="bi bi-check-lg" style="font-size:0.65rem;"></i></div>
+                    <span class="step-label">Confirmed</span>
+                </div>
+                <div class="step {% if booking.status in 'TRIP_STARTED,COMPLETED' %}completed{% elif booking.status == 'TRIP_STARTED' %}active{% endif %}">
+                    <div class="step-dot"><i class="bi bi-check-lg" style="font-size:0.65rem;"></i></div>
+                    <span class="step-label">In Progress</span>
+                </div>
+                <div class="step {% if booking.status == 'COMPLETED' %}completed{% endif %}">
+                    <div class="step-dot"><i class="bi bi-check-lg" style="font-size:0.65rem;"></i></div>
+                    <span class="step-label">Completed</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if bookings.has_other_pages %}
+<nav class="mt-4 d-flex justify-content-center">
+    <ul class="pagination" style="gap:4px;">
+        {% if bookings.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ bookings.previous_page_number }}" style="border-radius:8px;border:1px solid var(--tr-gray-200);">← Prev</a></li>
+        {% endif %}
+        {% for i in bookings.paginator.page_range %}
+        <li class="page-item {% if bookings.number == i %}active{% endif %}"><a class="page-link" href="?page={{ i }}" style="border-radius:8px;">{{ i }}</a></li>
+        {% endfor %}
+        {% if bookings.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ bookings.next_page_number }}" style="border-radius:8px;border:1px solid var(--tr-gray-200);">Next →</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="tr-empty-state">
+    <div class="empty-icon"><i class="bi bi-calendar-x"></i></div>
+    <h4>No Bookings Found</h4>
+    <p>{% if status_filter %}No {{ status_filter|lower }} bookings yet.{% else %}You haven't made any bookings yet. Start exploring our amazing packages!{% endif %}</p>
+    <a href="{% url 'packages:package_list' %}" class="tr-btn tr-btn-primary">
+        <i class="bi bi-compass me-2"></i>Browse Packages
+    </a>
+</div>
+{% endif %}
+{% endblock %}

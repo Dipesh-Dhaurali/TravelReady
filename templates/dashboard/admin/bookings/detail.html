@@ -1,0 +1,213 @@
+{% extends 'dashboard/base_admin.html' %}
+{% load static %}
+
+{% block title %}Booking {{ booking.booking_id }} - TravelReady Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Booking {{ booking.booking_id }}</h1>
+        <div class="page-subtitle">Complete booking information and management controls.</div>
+    </div>
+    <a href="{% url 'dashboard:admin_bookings' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Bookings
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <!-- Booking Info Card -->
+        <div class="admin-card mb-4">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title"><i class="bi bi-info-circle me-2 text-primary"></i>Booking Information</h5>
+                {% if booking.status == 'PENDING' %}
+                    <span class="badge bg-warning text-dark fs-6">Pending</span>
+                {% elif booking.status == 'CONFIRMED' %}
+                    <span class="badge bg-success fs-6">Confirmed</span>
+                {% elif booking.status == 'TRIP_STARTED' %}
+                    <span class="badge bg-primary fs-6">In Progress</span>
+                {% elif booking.status == 'COMPLETED' %}
+                    <span class="badge bg-secondary fs-6">Completed</span>
+                {% else %}
+                    <span class="badge bg-danger fs-6">Cancelled</span>
+                {% endif %}
+            </div>
+            <div class="p-4">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Trip / Package</label>
+                        <div class="fw-semibold">
+                            {% if booking.package %}
+                                {{ booking.package.title }}
+                            {% elif booking.custom_trip %}
+                                {{ booking.custom_trip.trip_name|default:"Custom Trip" }}
+                            {% else %}
+                                Travel Package
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Customer</label>
+                        <div class="fw-semibold">{{ booking.user.get_full_name|default:booking.user.username }}</div>
+                        <div class="text-muted small">{{ booking.user.email }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Travel Date</label>
+                        <div class="fw-semibold">{{ booking.travel_date|date:"l, F d, Y" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Return Date</label>
+                        <div class="fw-semibold">{{ booking.return_date|date:"l, F d, Y"|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Adults</label>
+                        <div class="fw-semibold">{{ booking.adults }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Children</label>
+                        <div class="fw-semibold">{{ booking.children }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Infants</label>
+                        <div class="fw-semibold">{{ booking.infants }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Payment Option</label>
+                        <div class="fw-semibold">{{ booking.get_payment_option_display }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Payment Status</label>
+                        <div>
+                            {% if booking.payment_verified %}
+                                <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Verified</span>
+                            {% else %}
+                                <span class="text-muted"><i class="bi bi-x-circle me-1"></i>Not Verified</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if booking.traveler_names %}
+                    <div class="col-12">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Traveler Names</label>
+                        <div class="p-3 bg-light rounded border">{{ booking.traveler_names }}</div>
+                    </div>
+                    {% endif %}
+                    {% if booking.special_requirements %}
+                    <div class="col-12">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Special Requirements</label>
+                        <div class="p-3 bg-light rounded border">{{ booking.special_requirements }}</div>
+                    </div>
+                    {% endif %}
+                    {% if booking.emergency_contact_name %}
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Emergency Contact</label>
+                        <div class="fw-semibold">{{ booking.emergency_contact_name }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Emergency Phone</label>
+                        <div class="fw-semibold">{{ booking.emergency_contact_phone }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment History -->
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title"><i class="bi bi-clock-history me-2 text-info"></i>Payment History</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Payment Ref</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                            <th class="pe-4">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in booking.payments.all %}
+                        <tr>
+                            <td class="ps-4 fw-bold">{{ payment.payment_ref }}</td>
+                            <td class="fw-bold">Rs. {{ payment.amount }}</td>
+                            <td>{{ payment.get_payment_method_display }}</td>
+                            <td>
+                                {% if payment.verification_status == 'APPROVED' %}
+                                    <span class="badge bg-success">Approved</span>
+                                {% elif payment.verification_status == 'REJECTED' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-4">{{ payment.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">No payments recorded for this booking.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Cost Summary -->
+        <div class="admin-card mb-4">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title"><i class="bi bi-cash-stack me-2 text-success"></i>Cost Summary</h5>
+            </div>
+            <div class="p-4">
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="text-muted">Total Cost</span>
+                    <span class="fw-bold">Rs. {{ booking.total_cost }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="text-muted">Amount Paid</span>
+                    <span class="fw-bold text-success">Rs. {{ booking.amount_paid }}</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between">
+                    <span class="fw-bold">Balance Due</span>
+                    <span class="fw-bold {% if booking.amount_paid < booking.total_cost %}text-danger{% else %}text-success{% endif %}">
+                        Rs. {{ booking.balance|default:booking.total_cost }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Update Status -->
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title"><i class="bi bi-pencil-square me-2 text-warning"></i>Update Booking</h5>
+            </div>
+            <div class="p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="status" class="form-label fw-semibold">Booking Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="PENDING" {% if booking.status == 'PENDING' %}selected{% endif %}>Pending Payment</option>
+                            <option value="CONFIRMED" {% if booking.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                            <option value="TRIP_STARTED" {% if booking.status == 'TRIP_STARTED' %}selected{% endif %}>Trip Started</option>
+                            <option value="COMPLETED" {% if booking.status == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                            <option value="CANCELLED" {% if booking.status == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="admin_notes" class="form-label fw-semibold">Admin Notes</label>
+                        <textarea class="form-control" id="admin_notes" name="admin_notes" rows="4" placeholder="Internal notes...">{{ booking.admin_notes|default:'' }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-admin-primary w-100">
+                        <i class="bi bi-save me-1"></i> Save Changes
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ destination.name }} - TravelReady{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-image {
+        height: 450px;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+    }
+    .hero-image::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.75), transparent 50%);
+    }
+    .hero-title {
+        position: absolute;
+        bottom: 30px;
+        left: 0;
+        right: 0;
+        color: white;
+        z-index: 1;
+    }
+    .nav-tabs .nav-link.active {
+        font-weight: 600;
+    }
+    .price-calculator {
+        position: sticky;
+        top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-image" style="background-image: url('{% if destination.main_image %}{{ destination.main_image.url }}{% endif %}');">
+    <div class="container hero-title">
+        <div class="d-flex flex-wrap gap-2 mb-2">
+            <span class="badge bg-info">{{ destination.get_destination_type_display }}</span>
+            <span class="badge {% if destination.status == 'Active' %}bg-success{% else %}bg-secondary{% endif %}">{{ destination.status }}</span>
+        </div>
+        <h1 class="display-4 fw-bold">{{ destination.name }}</h1>
+        {% if destination.location %}<p class="lead"><i class="bi bi-geo-alt-fill"></i> {{ destination.location }}{% if destination.district %}, {{ destination.district }}{% endif %}</p>{% endif %}
+    </div>
+</div>
+
+<div class="container py-5">
+    {% if destination.gallery.all %}
+    <div class="mb-5">
+        <h2 class="h3 fw-bold mb-4">Gallery</h2>
+        <div id="galleryCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+            <div class="carousel-inner rounded shadow">
+                {% for img in destination.gallery.all %}
+                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                    <img src="{{ img.image.url }}" class="d-block w-100" style="height: 400px; object-fit: cover;" alt="{{ img.caption|default:destination.name }}">
+                    {% if img.caption %}
+                    <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded py-2">
+                        <p class="mb-0">{{ img.caption }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#galleryCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#galleryCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+            </button>
+        </div>
+        <div class="row g-2">
+            {% for img in destination.gallery.all %}
+            <div class="col-md-4">
+                <img src="{{ img.image.url }}" class="img-fluid rounded shadow-sm" style="height: 150px; width: 100%; object-fit: cover;" alt="{{ img.caption|default:destination.name }}">
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-5">
+        <div class="col-lg-8">
+            <ul class="nav nav-tabs mb-4" id="destTabs" role="tablist">
+                <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#overview">Overview</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#rules">Rules &amp; Regulations</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#season">Best Season</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#activities">Activities</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#hotels">Hotels</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#transport">Transport</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#packages">Packages</button></li>
+            </ul>
+
+            <div class="tab-content" id="destTabsContent">
+                <div class="tab-pane fade show active" id="overview">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h2 class="h4 fw-bold mb-3">About {{ destination.name }}</h2>
+                            <div class="lh-lg">{{ destination.description|linebreaks }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="rules">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h2 class="h4 fw-bold mb-3">Rules &amp; Regulations</h2>
+                            {% if destination.rules_regulations %}
+                            <div class="lh-lg">{{ destination.rules_regulations|linebreaks }}</div>
+                            {% else %}
+                            <p class="text-muted">No rules specified.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="season">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h2 class="h4 fw-bold mb-3"><i class="bi bi-sun-fill text-warning"></i> Best Season to Visit</h2>
+                            {% if destination.best_season %}
+                            <p class="lead">{{ destination.best_season }}</p>
+                            {% else %}
+                            <p class="text-muted">Best season information not available.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="activities">
+                    <h2 class="h4 fw-bold mb-3">Available Activities</h2>
+                    {% if destination.activities.all %}
+                    <div class="row g-3">
+                        {% for act in destination.activities.all %}
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm">
+                                {% if act.image %}
+                                <img src="{{ act.image.url }}" class="card-img-top" style="height: 160px; object-fit: cover;" alt="{{ act.title }}">
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ act.title }}</h5>
+                                    <div class="d-flex gap-3 mb-2 small">
+                                        <span class="text-success"><strong>Adult:</strong> Rs. {{ act.adult_price }}</span>
+                                        <span class="text-info"><strong>Child:</strong> Rs. {{ act.child_price }}</span>
+                                    </div>
+                                    <p class="text-muted small mb-0"><i class="bi bi-clock"></i> {{ act.duration_hours }} hrs</p>
+                                    {% if act.description %}<p class="card-text mt-2 small">{{ act.description|truncatechars:120 }}</p>{% endif %}
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input activity-checkbox" type="checkbox" name="activities" value="{{ act.id }}" form="priceForm" id="act_{{ act.id }}">
+                                        <label class="form-check-label small" for="act_{{ act.id }}">Add to trip</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No activities listed.</p>
+                    {% endif %}
+                </div>
+
+                <div class="tab-pane fade" id="hotels">
+                    <h2 class="h4 fw-bold mb-3">Accommodation Options</h2>
+                    {% if destination.hotels.all %}
+                    <div class="row g-4">
+                        {% for hotel in destination.hotels.all %}
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm overflow-hidden">
+                                {% if hotel.image %}
+                                <img src="{{ hotel.image.url }}" class="card-img-top" style="height: 180px; object-fit: cover;" alt="{{ hotel.name }}">
+                                {% endif %}
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h5 class="card-title mb-0">{{ hotel.name }}</h5>
+                                        <span class="badge bg-primary">{{ hotel.get_category_display }}</span>
+                                    </div>
+                                    <p class="text-primary fw-bold mb-2">Rs. {{ hotel.per_night_rate }} / night</p>
+                                    {% if hotel.room_types %}
+                                    <p class="small text-muted mb-2"><i class="bi bi-house-door"></i> {{ hotel.room_types }}</p>
+                                    {% endif %}
+                                    {% if hotel.description %}
+                                    <p class="card-text small">{{ hotel.description|truncatechars:150 }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No hotel information available.</p>
+                    {% endif %}
+                </div>
+
+                <div class="tab-pane fade" id="transport">
+                    <h2 class="h4 fw-bold mb-3">Transportation Options</h2>
+                    {% if destination.transportations.all %}
+                    <div class="row g-3">
+                        {% for t in destination.transportations.all %}
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h5 class="card-title mb-1"><i class="bi bi-truck me-2"></i>{{ t.get_vehicle_type_display }}</h5>
+                                            <p class="text-muted small mb-0">{{ t.route_origin }} &rarr; {{ destination.name }}</p>
+                                        </div>
+                                        <span class="badge bg-info">{{ t.duration_hours }} hrs</span>
+                                    </div>
+                                    <div class="d-flex gap-3 mt-3 small">
+                                        <span><strong>Per Person:</strong> Rs. {{ t.per_person_price }}</span>
+                                        <span><strong>Per Vehicle:</strong> Rs. {{ t.per_vehicle_price }}</span>
+                                    </div>
+                                    <div class="form-check mt-3">
+                                        <input class="form-check-input transport-checkbox" type="checkbox" name="transportation" value="{{ t.id }}" form="priceForm" id="trans_{{ t.id }}">
+                                        <label class="form-check-label small" for="trans_{{ t.id }}">Include transport</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No transport options listed.</p>
+                    {% endif %}
+                </div>
+
+                <div class="tab-pane fade" id="packages">
+                    <h2 class="h4 fw-bold mb-3">Available Packages</h2>
+                    {% if destination.packages.all %}
+                    <div class="row g-3">
+                        {% for pkg in destination.packages.all %}
+                        {% if pkg.status == 'Active' %}
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm overflow-hidden position-relative">
+                                {% if pkg.is_popular %}<span class="position-absolute top-0 start-0 badge bg-warning text-dark m-2">POPULAR</span>{% endif %}
+                                {% if pkg.thumbnail %}
+                                <img src="{{ pkg.thumbnail.url }}" class="card-img-top" style="height: 160px; object-fit: cover;" alt="{{ pkg.title }}">
+                                {% endif %}
+                                <div class="card-body">
+                                    <span class="badge bg-secondary mb-2">{{ pkg.get_package_type_display }}</span>
+                                    <h5 class="card-title">{{ pkg.title }}</h5>
+                                    <p class="small text-muted mb-2">{{ pkg.base_days }} Days</p>
+                                    <p class="text-primary fw-bold mb-3">From Rs. {{ pkg.base_price }}</p>
+                                    <a href="{% url 'packages:package_detail' pkg.slug %}" class="btn btn-primary btn-sm w-100">View Package</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No packages available for this destination yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="price-calculator">
+                <div id="priceForm"
+                     hx-post="{% url 'destinations:calculate_price_htmx' destination.slug %}"
+                     hx-trigger="change from:#priceForm, submit"
+                     hx-target="#price-breakdown"
+                     hx-include="#priceForm"
+                     hx-swap="innerHTML">
+                    <div class="card border-0 shadow">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="card-title mb-0"><i class="bi bi-calculator me-2"></i>Price Calculator</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Package Type</label>
+                                <div class="d-flex flex-column gap-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="package_type" id="pt_single" value="SINGLE" checked form="priceForm">
+                                        <label class="form-check-label" for="pt_single">Single Person</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="package_type" id="pt_couple" value="COUPLE" form="priceForm">
+                                        <label class="form-check-label" for="pt_couple">Couple</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="package_type" id="pt_family" value="FAMILY" form="priceForm">
+                                        <label class="form-check-label" for="pt_family">Family</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="num_days" class="form-label fw-semibold">Number of Days</label>
+                                <div class="input-group">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('num_days').stepDown()">-</button>
+                                    <input type="number" id="num_days" name="num_days" class="form-control text-center" value="3" min="1" max="30" form="priceForm">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('num_days').stepUp()">+</button>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label for="adults" class="form-label fw-semibold">Adults</label>
+                                    <input type="number" id="adults" name="adults" class="form-control" value="2" min="1" max="10" form="priceForm">
+                                </div>
+                                <div class="col-6">
+                                    <label for="children" class="form-label fw-semibold">Children</label>
+                                    <input type="number" id="children" name="children" class="form-control" value="0" min="0" max="10" form="priceForm">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="hotel_category" class="form-label fw-semibold">Hotel Category</label>
+                                <select id="hotel_category" name="hotel_category" class="form-select" form="priceForm">
+                                    <option value="">-- No Hotel --</option>
+                                    <option value="BUDGET">Budget</option>
+                                    <option value="THREE_STAR">3 Star</option>
+                                    <option value="FOUR_STAR">4 Star</option>
+                                    <option value="LUXURY">Luxury</option>
+                                </select>
+                            </div>
+
+                            <div id="price-breakdown" class="mb-3">
+                                <div class="card border-0 bg-light">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Price Breakdown</h5>
+                                        <p class="text-muted small mb-0">Select options above to see detailed estimate.</p>
+                                        <h4 class="text-primary mt-2">Estimated Total: Rs. {{ destination.base_visit_cost }}</h4>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" form="priceForm" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-calendar-check me-2"></i>Book Now
+                                </button>
+                                {% if user.is_authenticated %}
+                                <a href="{% url 'destinations:add_to_wishlist' destination.slug %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-heart me-2"></i>Add to Wishlist
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

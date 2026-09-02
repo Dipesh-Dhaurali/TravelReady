@@ -1,0 +1,462 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Build My Trip - TravelReady{% endblock %}
+{% block dashboard_page_title %}Build My Custom Trip{% endblock %}
+
+{% block dashboard_content %}
+<div class="py-1">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold mb-1" style="color: #0f172a;"><i class="bi bi-compass-fill me-2" style="color: #059669;"></i>Custom Trip Designer</h4>
+            <p class="text-muted mb-0" style="font-size: 0.875rem;">Build, customize and calculate your personalized itinerary in 4 easy steps</p>
+        </div>
+        <a href="{% url 'dashboard:my_trips' %}" class="tr-btn tr-btn-secondary tr-btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> My Saved Trips
+        </a>
+    </div>
+
+    <ul class="nav nav-pills nav-justified mb-4 p-2 rounded-4 shadow-sm" style="background: white; border: 1px solid var(--tr-gray-200);">
+        <li class="nav-item">
+            <a class="nav-link active fw-semibold" data-step="1" href="#step1"><span class="badge bg-primary me-2">1</span>Destinations</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-muted fw-semibold" data-step="2" href="#step2"><span class="badge bg-secondary me-2">2</span>Hotel & Travelers</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-muted fw-semibold" data-step="3" href="#step3"><span class="badge bg-secondary me-2">3</span>Activities & Transport</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-muted fw-semibold" data-step="4" href="#step4"><span class="badge bg-secondary me-2">4</span>Review & Book</a>
+        </li>
+    </ul>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <form id="builderForm" method="post">
+                {% csrf_token %}
+
+                <div id="step1" class="step-content card p-4 mb-4">
+                    <h4><i class="bi bi-geo-alt-fill text-danger"></i> Step 1: Destination Route</h4>
+                    <hr>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Trip Name</label>
+                        <input type="text" name="trip_name" class="form-control" placeholder="e.g., Family Nepal Adventure" value="{{ trip_name }}">
+                    </div>
+                    <div id="destination-rows" class="space-y-3"></div>
+                    <template id="destination-row-template">
+                        <div class="card mb-3 route-row">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-1">
+                                        <label class="form-label fw-bold">#</label>
+                                        <input type="number" name="order[]" class="form-control order-input" min="1" value="1">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label fw-bold">Destination</label>
+                                        <select name="destination[]" class="form-select destination-select">
+                                            <option value="">-- Select Destination --</option>
+                                            {% for dest in destinations %}
+                                                <option value="{{ dest.id }}" data-name="{{ dest.name }}">{{ dest.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-bold">Days Stay</label>
+                                        <input type="number" name="days_stay[]" class="form-control days-input" min="1" max="14" value="2">
+                                    </div>
+                                    <div class="col-md-3 d-flex align-items-end">
+                                        <button type="button" class="btn btn-outline-danger remove-row w-100">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <button type="button" id="add-destination" class="btn btn-outline-success mb-3">
+                        <i class="bi bi-plus-circle"></i> Add Destination
+                    </button>
+                    <div class="alert alert-info">
+                        <strong>Total Days:</strong> <span id="total-days">0</span> days
+                    </div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="button" class="btn btn-primary next-step" data-to="2">Next: Hotel & Travelers <i class="bi bi-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <div id="step2" class="step-content card p-4 mb-4 d-none">
+                    <h4><i class="bi bi-building text-warning"></i> Step 2: Hotel & Travelers</h4>
+                    <hr>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold d-block">Hotel Category</label>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-check card p-3 {% if selected_hotel_category == 'BUDGET' %}border-primary{% endif %}">
+                                    <input class="form-check-input" type="radio" name="hotel_category" id="hc_budget" value="BUDGET" {% if selected_hotel_category == 'BUDGET' %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="hc_budget">
+                                        <i class="bi bi-house"></i> Budget
+                                        <small class="text-muted d-block">~ Rs. 1,500-3,000/night</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check card p-3 {% if selected_hotel_category == 'THREE_STAR' %}border-primary{% endif %}">
+                                    <input class="form-check-input" type="radio" name="hotel_category" id="hc_3star" value="THREE_STAR" {% if selected_hotel_category == 'THREE_STAR' %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="hc_3star">
+                                        <i class="bi bi-building"></i> 3 Star
+                                        <small class="text-muted d-block">~ Rs. 4,000-7,000/night</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check card p-3 {% if selected_hotel_category == 'FOUR_STAR' %}border-primary{% endif %}">
+                                    <input class="form-check-input" type="radio" name="hotel_category" id="hc_4star" value="FOUR_STAR" {% if selected_hotel_category == 'FOUR_STAR' %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="hc_4star">
+                                        <i class="bi bi-building-fill"></i> 4 Star
+                                        <small class="text-muted d-block">~ Rs. 8,000-15,000/night</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check card p-3 {% if selected_hotel_category == 'LUXURY' %}border-primary{% endif %}">
+                                    <input class="form-check-input" type="radio" name="hotel_category" id="hc_luxury" value="LUXURY" {% if selected_hotel_category == 'LUXURY' %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="hc_luxury">
+                                        <i class="bi bi-houses-fill"></i> Luxury
+                                        <small class="text-muted d-block">~ Rs. 18,000+/night</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <h5 class="mb-3"><i class="bi bi-people text-info"></i> Travelers</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Adults</label>
+                            <input type="number" name="adults" class="form-control" min="1" max="20" value="{{ adults|default:1 }}">
+                            <small class="text-muted">Age 12+</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Children</label>
+                            <input type="number" name="children" class="form-control" min="0" max="10" value="{{ children|default:0 }}">
+                            <small class="text-muted">Age 2-11</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Infants</label>
+                            <input type="number" name="infants" class="form-control" min="0" max="5" value="{{ infants|default:0 }}">
+                            <small class="text-muted">Under 2 (free)</small>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary prev-step" data-to="1"><i class="bi bi-arrow-left"></i> Back</button>
+                        <button type="button" class="btn btn-primary next-step" data-to="3">Next: Activities & Transport <i class="bi bi-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <div id="step3" class="step-content card p-4 mb-4 d-none">
+                    <h4><i class="bi bi-bicycle text-success"></i> Step 3: Activities & Transport</h4>
+                    <hr>
+                    <div class="mb-4">
+                        <h5 class="mb-3"><i class="bi bi-list-task"></i> Activities (Per Destination)</h5>
+                        <div class="accordion" id="activitiesAccordion">
+                            {% for dest in destinations %}
+                                <div class="accordion-item activity-dest-block" data-dest-id="{{ dest.id }}">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-act-{{ dest.id }}">
+                                            <strong>{{ dest.name }}</strong> <span class="text-muted ms-2">Activities</span>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse-act-{{ dest.id }}" class="accordion-collapse collapse" data-bs-parent="#activitiesAccordion">
+                                        <div class="accordion-body">
+                                            {% if dest.activities.all %}
+                                                {% for activity in dest.activities.all %}
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input activity-checkbox" type="checkbox" name="activities" value="{{ activity.id }}" id="act-{{ activity.id }}" data-adult="{{ activity.adult_price }}" data-child="{{ activity.child_price }}">
+                                                        <label class="form-check-label" for="act-{{ activity.id }}">
+                                                            <strong>{{ activity.title }}</strong>
+                                                            <span class="badge bg-light text-dark ms-2">Adult: Rs. {{ activity.adult_price }}</span>
+                                                            <span class="badge bg-light text-dark ms-1">Child: Rs. {{ activity.child_price }}</span>
+                                                        </label>
+                                                    </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <p class="text-muted">No activities available for this destination.</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h5 class="mb-3"><i class="bi bi-car-front-fill"></i> Transport Between Destinations</h5>
+                        {% for dest in destinations %}
+                            {% if dest.transportations.all %}
+                                <div class="card mb-3 transport-block" data-dest-id="{{ dest.id }}">
+                                    <div class="card-header bg-light fw-bold">
+                                        To: {{ dest.name }}
+                                    </div>
+                                    <div class="card-body">
+                                        {% for transport in dest.transportations.all %}
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input transport-radio" type="radio" name="transport_{{ dest.id }}" value="{{ transport.id }}" id="tr-{{ transport.id }}" data-price="{{ transport.per_person_price }}">
+                                                <label class="form-check-label" for="tr-{{ transport.id }}">
+                                                    <strong>{{ transport.get_vehicle_type_display }}</strong>
+                                                    <span class="ms-2">({{ transport.route_origin }} &rarr; {{ dest.name }})</span>
+                                                    <span class="badge bg-info text-white ms-2">Rs. {{ transport.per_person_price }}/person</span>
+                                                </label>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary prev-step" data-to="2"><i class="bi bi-arrow-left"></i> Back</button>
+                        <button type="button" class="btn btn-primary next-step" data-to="4">Next: Review & Book <i class="bi bi-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <div id="step4" class="step-content card p-4 mb-4 d-none">
+                    <h4><i class="bi bi-clipboard-check text-primary"></i> Step 4: Review & Summary</h4>
+                    <hr>
+                    <div id="review-section">
+                        <h5 class="mb-3"><i class="bi bi-signpost-split"></i> Itinerary Route</h5>
+                        <div id="review-route" class="alert alert-light border mb-4">
+                            <p class="mb-0"><em>Add destinations in Step 1 to see your route.</em></p>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="card p-3">
+                                    <div class="text-muted small">Hotel</div>
+                                    <div class="fw-bold" id="review-hotel">-</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card p-3">
+                                    <div class="text-muted small">Total Days</div>
+                                    <div class="fw-bold" id="review-days">-</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card p-3">
+                                    <div class="text-muted small">Travelers</div>
+                                    <div class="fw-bold" id="review-travelers">-</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h5 class="mb-3"><i class="bi bi-list-stars"></i> Selected Activities</h5>
+                        <div id="review-activities" class="mb-4">
+                            <p class="text-muted"><em>No activities selected yet.</em></p>
+                        </div>
+
+                        <h5 class="mb-3"><i class="bi bi-truck"></i> Selected Transport</h5>
+                        <div id="review-transport" class="mb-4">
+                            <p class="text-muted"><em>No transport selected yet.</em></p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-outline-secondary prev-step" data-to="3"><i class="bi bi-arrow-left"></i> Back</button>
+                        <button type="submit" name="action" value="save" class="btn btn-outline-primary">
+                            <i class="bi bi-save"></i> Save Trip
+                        </button>
+                        <button type="submit" name="action" value="convert" class="btn btn-success">
+                            <i class="bi bi-cart-check"></i> Convert to Booking
+                        </button>
+                        <a href="{% url 'custom_trips:quotation_request' %}" class="btn btn-warning text-white">
+                            <i class="bi bi-envelope-paper"></i> Request Custom Quote
+                        </a>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="sticky-top" style="top: 1rem;">
+                <div class="card shadow border-0"
+                     hx-post="{% url 'custom_trips:calculate_trip_htmx' %}"
+                     hx-trigger="change from:#builderForm, submit delay:500ms"
+                     hx-target="#trip-price-breakdown"
+                     hx-include="#builderForm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-calculator"></i> Price Breakdown</h5>
+                    </div>
+                    <div id="trip-price-breakdown" class="card-body">
+                        <h6 class="text-muted mb-3">Trip Summary</h6>
+                        <ul class="list-group list-group-flush mb-3">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Hotels</span>
+                                <span id="price-hotels">Rs. 0</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Transport</span>
+                                <span id="price-transport">Rs. 0</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Activities</span>
+                                <span id="price-activities">Rs. 0</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Subtotal</span>
+                                <strong id="price-subtotal">Rs. 0</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Service Fee (10%)</span>
+                                <span id="price-service">Rs. 0</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>VAT (13%)</span>
+                                <span id="price-vat">Rs. 0</span>
+                            </li>
+                        </ul>
+                        <div class="d-grid gap-2 bg-light rounded p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold fs-5">TOTAL</span>
+                                <span class="fw-bold fs-4 text-primary" id="price-total">Rs. 0</span>
+                            </div>
+                        </div>
+                        <p class="text-muted small mt-3 mb-0"><i class="bi bi-info-circle"></i> Final price may vary based on availability.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    let step = 1;
+    const steps = document.querySelectorAll('.step-content');
+    const navLinks = document.querySelectorAll('.nav-pills .nav-link');
+
+    function showStep(n) {
+        steps.forEach((s, i) => s.classList.toggle('d-none', i + 1 !== n));
+        navLinks.forEach((link, i) => {
+            link.classList.toggle('active', i + 1 === n);
+            link.classList.toggle('text-muted', i + 1 !== n);
+            const badge = link.querySelector('.badge');
+            if (badge) {
+                badge.classList.toggle('bg-primary', i + 1 <= n);
+                badge.classList.toggle('bg-secondary', i + 1 > n);
+            }
+        });
+        window.scrollTo({top: 0, behavior: 'smooth'});
+        step = n;
+    }
+
+    document.querySelectorAll('.next-step').forEach(btn => {
+        btn.addEventListener('click', () => showStep(parseInt(btn.dataset.to)));
+    });
+    document.querySelectorAll('.prev-step').forEach(btn => {
+        btn.addEventListener('click', () => showStep(parseInt(btn.dataset.to)));
+    });
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            showStep(parseInt(link.dataset.step));
+        });
+    });
+
+    const rowsContainer = document.getElementById('destination-rows');
+    const rowTemplate = document.getElementById('destination-row-template');
+    const addBtn = document.getElementById('add-destination');
+
+    function reorderRows() {
+        rowsContainer.querySelectorAll('.route-row').forEach((row, idx) => {
+            row.querySelector('.order-input').value = idx + 1;
+        });
+        updateTotals();
+        updateReview();
+    }
+
+    function addRow() {
+        const clone = rowTemplate.content.cloneNode(true);
+        rowsContainer.appendChild(clone);
+        const rows = rowsContainer.querySelectorAll('.route-row');
+        rows.forEach((row, idx) => {
+            row.querySelector('.order-input').value = idx + 1;
+            row.querySelector('.remove-row').addEventListener('click', () => {
+                if (rowsContainer.querySelectorAll('.route-row').length > 1) {
+                    row.remove();
+                    reorderRows();
+                }
+            });
+            row.querySelectorAll('input, select').forEach(el => {
+                el.addEventListener('input', updateTotals);
+                el.addEventListener('change', updateTotals);
+            });
+        });
+        reorderRows();
+    }
+
+    function updateTotals() {
+        let total = 0;
+        document.querySelectorAll('.days-input').forEach(inp => {
+            total += parseInt(inp.value) || 0;
+        });
+        const totalDaysEl = document.getElementById('total-days');
+        if (totalDaysEl) totalDaysEl.textContent = total;
+        updateReview();
+    }
+
+    function updateReview() {
+        const routeEl = document.getElementById('review-route');
+        const rows = rowsContainer.querySelectorAll('.route-row');
+        if (rows.length === 0) {
+            routeEl.innerHTML = '<p class="mb-0"><em>Add destinations in Step 1 to see your route.</em></p>';
+        } else {
+            let parts = [];
+            rows.forEach((row, idx) => {
+                const sel = row.querySelector('.destination-select');
+                const days = row.querySelector('.days-input').value || 0;
+                const name = sel.options[sel.selectedIndex]?.dataset?.name || 'Destination ' + (idx+1);
+                parts.push(`${idx+1}. ${name} - ${days} days`);
+            });
+            routeEl.innerHTML = '<p class="mb-0 fs-5">' + parts.join(' &rarr; ') + '</p>';
+        }
+
+        const hotelRadio = document.querySelector('input[name="hotel_category"]:checked');
+        const hotelLabels = {BUDGET:'Budget', THREE_STAR:'3 Star', FOUR_STAR:'4 Star', LUXURY:'Luxury'};
+        document.getElementById('review-hotel').textContent = hotelRadio ? hotelLabels[hotelRadio.value] : '-';
+
+        document.getElementById('review-days').textContent = (document.getElementById('total-days')?.textContent || '0') + ' days';
+
+        const ad = document.querySelector('input[name="adults"]')?.value || 0;
+        const ch = document.querySelector('input[name="children"]')?.value || 0;
+        const inf = document.querySelector('input[name="infants"]')?.value || 0;
+        document.getElementById('review-travelers').textContent = `${ad}A, ${ch}C, ${inf}I`;
+
+        const actList = [];
+        document.querySelectorAll('.activity-checkbox:checked').forEach(cb => {
+            const label = document.querySelector(`label[for="${cb.id}"]`);
+            if (label) actList.push('<li>' + label.querySelector('strong').textContent + '</li>');
+        });
+        const actEl = document.getElementById('review-activities');
+        actEl.innerHTML = actList.length ? '<ul class="list-group">' + actList.join('') + '</ul>' : '<p class="text-muted"><em>No activities selected yet.</em></p>';
+
+        const trList = [];
+        document.querySelectorAll('.transport-radio:checked').forEach(rb => {
+            const label = document.querySelector(`label[for="${rb.id}"]`);
+            if (label) trList.push('<li class="list-group-item">' + label.textContent.trim() + '</li>');
+        });
+        const trEl = document.getElementById('review-transport');
+        trEl.innerHTML = trList.length ? '<ul class="list-group">' + trList.join('') + '</ul>' : '<p class="text-muted"><em>No transport selected yet.</em></p>';
+    }
+
+    addBtn.addEventListener('click', addRow);
+    document.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('input', updateReview);
+        el.addEventListener('change', updateReview);
+    });
+
+    addRow();
+})();
+</script>
+{% endblock %}

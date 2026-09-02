@@ -1,0 +1,157 @@
+{% extends 'dashboard/base_admin.html' %}
+{% load static %}
+
+{% block title %}Admin Control Center - TravelReady{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Admin Dashboard</h1>
+        <div class="page-subtitle">Real-time overview of bookings, revenue, payments, and platform activity.</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'dashboard:admin_destination_create' %}" class="btn btn-admin-primary">
+            <i class="bi bi-plus-lg me-1"></i> Add Destination
+        </a>
+        <a href="{% url 'dashboard:admin_package_create' %}" class="btn btn-admin-secondary">
+            <i class="bi bi-box-seam me-1"></i> Add Package
+        </a>
+    </div>
+</div>
+
+<!-- KPI Metrics Section -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon-wrapper bg-success bg-opacity-10 text-success">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+            <div>
+                <div class="stat-value">Rs. {{ total_revenue|default:0 }}</div>
+                <div class="stat-label">Total Verified Revenue</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon-wrapper bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-journal-check"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ total_bookings|default:0 }}</div>
+                <div class="stat-label">Total Bookings</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon-wrapper bg-danger bg-opacity-10 text-danger">
+                <i class="bi bi-credit-card-2-front"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ pending_payments|default:0 }}</div>
+                <div class="stat-label">Pending Payments</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon-wrapper bg-warning bg-opacity-10 text-warning">
+                <i class="bi bi-chat-quote"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ pending_quotations|default:0 }}</div>
+                <div class="stat-label">Pending Quotations</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Recent Bookings Table -->
+    <div class="col-lg-8">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title">Recent Bookings</h5>
+                <a href="{% url 'dashboard:admin_bookings' %}" class="btn btn-sm btn-light border font-weight-600">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Booking ID</th>
+                            <th>Customer</th>
+                            <th>Travel Date</th>
+                            <th>Total Cost</th>
+                            <th>Status</th>
+                            <th class="pe-4 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in recent_bookings %}
+                        <tr>
+                            <td class="ps-4 fw-bold text-primary">{{ b.booking_id }}</td>
+                            <td>
+                                <div class="fw-semibold">{{ b.user.get_full_name|default:b.user.username }}</div>
+                                <div class="text-muted extra-small">{{ b.user.email }}</div>
+                            </td>
+                            <td>{{ b.travel_date|date:"M d, Y" }}</td>
+                            <td class="fw-bold">Rs. {{ b.total_cost }}</td>
+                            <td>
+                                {% if b.status == 'PENDING' %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                {% elif b.status == 'CONFIRMED' %}
+                                    <span class="badge bg-success">Confirmed</span>
+                                {% elif b.status == 'CANCELLED' %}
+                                    <span class="badge bg-danger">Cancelled</span>
+                                {% else %}
+                                    <span class="badge bg-info text-dark">{{ b.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-4 text-end">
+                                <a href="{% url 'dashboard:admin_booking_detail' b.pk %}" class="btn btn-sm btn-outline-primary rounded-2">
+                                    Manage
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">No recent bookings available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Payment Receipts Widget -->
+    <div class="col-lg-4">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title">Pending Payment Receipts</h5>
+                <a href="{% url 'dashboard:admin_payments' %}" class="btn btn-sm btn-light border">Verify All</a>
+            </div>
+            <div class="p-3">
+                {% for p in recent_payments %}
+                    {% if p.verification_status == 'PENDING' %}
+                    <div class="border rounded-3 p-3 mb-3 bg-light bg-opacity-50">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-primary">{{ p.payment_ref }}</span>
+                            <small class="text-muted">{{ p.created_at|date:"M d, H:i" }}</small>
+                        </div>
+                        <div class="fw-bold text-dark mb-1">Rs. {{ p.amount }}</div>
+                        <div class="small text-muted mb-2">Method: {{ p.get_payment_method_display }}</div>
+                        <a href="{% url 'dashboard:admin_payment_verify' p.pk %}" class="btn btn-sm btn-danger w-100 rounded-2">
+                            <i class="bi bi-shield-check me-1"></i> Inspect & Verify
+                        </a>
+                    </div>
+                    {% endif %}
+                {% empty %}
+                    <div class="text-center py-4 text-muted">No pending receipts to verify</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

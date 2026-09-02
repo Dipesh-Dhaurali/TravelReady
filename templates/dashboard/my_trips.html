@@ -1,0 +1,76 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}My Custom Trips - TravelReady{% endblock %}
+{% block dashboard_page_title %}My Custom Trips{% endblock %}
+
+{% block dashboard_content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <p class="text-muted mb-0" style="font-size:0.9rem;">Your personalized trip plans and custom itineraries</p>
+    <a href="{% url 'custom_trips:trip_builder' %}" class="tr-btn tr-btn-primary tr-btn-sm">
+        <i class="bi bi-plus-circle"></i> Build New Trip
+    </a>
+</div>
+
+{% if trips %}
+<div class="d-flex flex-column gap-3">
+    {% for trip in trips %}
+    <div class="tr-booking-card animate-fadeInUp">
+        <div class="d-flex flex-wrap gap-3 align-items-start justify-content-between">
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                    <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#818cf8);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="bi bi-map" style="color:white;font-size:0.9rem;"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0" style="font-size:1rem;">{{ trip.trip_name|default:"My Custom Trip" }}</h5>
+                        <span style="font-size:0.75rem;color:#94a3b8;">Created {{ trip.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="ms-auto">
+                        {% if trip.status == 'DRAFT' %}<span class="tr-badge tr-badge-secondary"><span class="tr-badge-dot"></span>Draft</span>
+                        {% elif trip.status == 'SUBMITTED' %}<span class="tr-badge tr-badge-info"><span class="tr-badge-dot"></span>Submitted</span>
+                        {% elif trip.status == 'CONFIRMED' %}<span class="tr-badge tr-badge-success"><span class="tr-badge-dot"></span>Confirmed</span>
+                        {% else %}<span class="tr-badge tr-badge-warning"><span class="tr-badge-dot"></span>{{ trip.get_status_display }}</span>{% endif %}
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-3 mb-2">
+                    {% if trip.destination %}<span style="font-size:0.82rem;color:#64748b;"><i class="bi bi-geo-alt me-1"></i>{{ trip.destination }}</span>{% endif %}
+                    <span style="font-size:0.82rem;color:#64748b;"><i class="bi bi-calendar3 me-1"></i>{{ trip.start_date|date:"M d, Y"|default:"Flexible" }}</span>
+                    <span style="font-size:0.82rem;color:#64748b;"><i class="bi bi-clock me-1"></i>{{ trip.num_days }} Days</span>
+                    <span style="font-size:0.82rem;color:#64748b;"><i class="bi bi-people me-1"></i>{{ trip.num_adults }} Adults{% if trip.num_children %}, {{ trip.num_children }} Children{% endif %}</span>
+                </div>
+
+                {% if trip.special_requests %}
+                <p style="font-size:0.82rem;color:#64748b;background:#f8fafc;padding:0.6rem 0.9rem;border-radius:8px;border-left:3px solid #e2e8f0;margin-bottom:0;">
+                    {{ trip.special_requests|truncatechars:150 }}
+                </p>
+                {% endif %}
+            </div>
+
+            <div class="text-end d-flex flex-column gap-2" style="min-width: 160px;">
+                {% if trip.estimated_cost %}
+                <div>
+                    <div style="font-size:0.72rem;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Est. Cost</div>
+                    <div style="font-size:1.3rem;font-weight:800;color:#4f46e5;">Rs. {{ trip.estimated_cost }}</div>
+                </div>
+                {% endif %}
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="{% url 'custom_trips:custom_trip_detail' trip.id %}" class="tr-btn tr-btn-secondary tr-btn-sm">
+                        <i class="bi bi-eye"></i> View
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="tr-empty-state">
+    <div class="empty-icon"><i class="bi bi-compass"></i></div>
+    <h4>No Custom Trips Yet</h4>
+    <p>Use our trip builder to design your perfect personalized journey from scratch.</p>
+    <a href="{% url 'custom_trips:trip_builder' %}" class="tr-btn tr-btn-primary">
+        <i class="bi bi-magic me-2"></i>Build My First Trip
+    </a>
+</div>
+{% endif %}
+{% endblock %}

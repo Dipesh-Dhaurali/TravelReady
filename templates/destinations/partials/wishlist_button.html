@@ -1,0 +1,19 @@
+{% if is_in_wishlist %}
+<a href="{% url 'destinations:remove_from_wishlist' destination.slug %}"
+   hx-get="{% url 'destinations:remove_from_wishlist' destination.slug %}"
+   hx-target="this"
+   hx-swap="outerHTML"
+   class="btn btn-danger"
+   title="Remove from Wishlist">
+    <i class="bi bi-heart-fill me-1"></i> Saved to Wishlist
+</a>
+{% else %}
+<a href="{% url 'destinations:add_to_wishlist' destination.slug %}"
+   hx-get="{% url 'destinations:add_to_wishlist' destination.slug %}"
+   hx-target="this"
+   hx-swap="outerHTML"
+   class="btn btn-outline-danger"
+   title="Add to Wishlist">
+    <i class="bi bi-heart me-1"></i> Add to Wishlist
+</a>
+{% endif %}

@@ -1,0 +1,66 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}My Wishlist - TravelReady{% endblock %}
+{% block dashboard_page_title %}Saved Wishlist{% endblock %}
+
+{% block dashboard_content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <p class="text-muted mb-0" style="font-size:0.9rem;">Destinations and packages you've saved for later</p>
+    <a href="{% url 'destinations:destination_list' %}" class="tr-btn tr-btn-secondary tr-btn-sm">
+        <i class="bi bi-plus"></i> Discover More
+    </a>
+</div>
+
+{% if wishlist_items %}
+<div class="row g-4">
+    {% for item in wishlist_items %}
+    <div class="col-lg-4 col-md-6 animate-fadeInUp">
+        <div class="tr-card h-100">
+            <div class="card-img-wrapper">
+                {% if item.destination.main_image %}
+                    <img src="{{ item.destination.main_image.url }}" class="card-img-top" alt="{{ item.destination.name }}" style="height:200px;object-fit:cover;">
+                {% else %}
+                    <div style="height:200px;background:linear-gradient(135deg,#e0e7ff,#f0f9ff);display:flex;align-items:center;justify-content:center;">
+                        <i class="bi bi-geo-alt" style="font-size:3rem;color:#94a3b8;"></i>
+                    </div>
+                {% endif %}
+                <span class="card-badge" style="background:{% if item.destination.destination_type == 'INSIDE_COUNTRY' %}rgba(16,185,129,0.9){% else %}rgba(6,182,212,0.9){% endif %};color:white;">
+                    {% if item.destination.destination_type == 'INSIDE_COUNTRY' %}Inside Nepal{% else %}International{% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+                <div style="font-size:0.75rem;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.35rem;">
+                    <i class="bi bi-geo-alt me-1"></i>{{ item.destination.location }}
+                </div>
+                <h5 class="card-title fw-bold">{{ item.destination.name }}</h5>
+                <p style="font-size:0.85rem;color:#64748b;line-height:1.6;margin-bottom:1rem;">{{ item.destination.description|truncatechars:90 }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div style="font-size:0.75rem;color:#94a3b8;">Starting from</div>
+                        <div style="font-size:1.1rem;font-weight:800;color:#4f46e5;">Rs. {{ item.destination.base_visit_cost|default:"12,000" }}</div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'destinations:destination_detail' item.destination.slug %}" class="tr-btn tr-btn-primary tr-btn-sm">
+                            Explore
+                        </a>
+                        <a href="{% url 'destinations:remove_from_wishlist' item.destination.slug %}" class="btn btn-sm" style="border:1px solid #fee2e2;background:#fff;color:#ef4444;border-radius:8px;"
+                            title="Remove from wishlist">
+                            <i class="bi bi-heart-fill"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="tr-empty-state">
+    <div class="empty-icon"><i class="bi bi-heart"></i></div>
+    <h4>Your Wishlist is Empty</h4>
+    <p>Save your favorite destinations and packages here so you can easily find them later.</p>
+    <a href="{% url 'destinations:destination_list' %}" class="tr-btn tr-btn-primary">
+        <i class="bi bi-compass me-2"></i>Discover Destinations
+    </a>
+</div>
+{% endif %}
+{% endblock %}

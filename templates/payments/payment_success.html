@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment Submitted - TravelReady{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <div class="text-center mb-5">
+                <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 120px; height: 120px;">
+                    <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" style="width: 90px; height: 90px;">
+                        <i class="bi bi-check-lg text-white display-4"></i>
+                    </div>
+                </div>
+                <h2 class="mb-2">Payment Submitted Successfully!</h2>
+                <p class="text-muted fs-5 mb-0">Thank you for your payment. Your transaction has been submitted for verification.</p>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-primary text-white py-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-receipt fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">Payment Details</h5>
+                            <small class="text-white-50">Reference: {{ payment.payment_ref }}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-hash text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small mb-1">Payment Reference</h6>
+                                    <div class="fw-mono fw-bold">{{ payment.payment_ref }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-currency-rupee text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small mb-1">Amount Paid</h6>
+                                    <div class="fs-4 fw-bold text-primary">Rs. {{ payment.amount }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-shield-check text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small mb-1">Verification Status</h6>
+                                    <div>
+                                        {% if payment.verification_status == 'PENDING' %}
+                                            <span class="badge bg-warning text-dark px-3 py-2 fs-6">
+                                                <i class="bi bi-hourglass-split me-1"></i>Pending Verification
+                                            </span>
+                                        {% elif payment.verification_status == 'APPROVED' %}
+                                            <span class="badge bg-success px-3 py-2 fs-6">
+                                                <i class="bi bi-check-circle me-1"></i>Approved
+                                            </span>
+                                        {% elif payment.verification_status == 'REJECTED' %}
+                                            <span class="badge bg-danger px-3 py-2 fs-6">
+                                                <i class="bi bi-x-circle me-1"></i>Rejected
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-wallet2 text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small mb-1">Payment Method</h6>
+                                    <div class="fw-medium">
+                                        {% if payment.payment_method == 'ESEWA' %}
+                                            <i class="bi bi-phone text-success me-1"></i>eSewa
+                                        {% elif payment.payment_method == 'KHALTI' %}
+                                            <i class="bi bi-wallet text-warning me-1"></i>Khalti
+                                        {% else %}
+                                            <i class="bi bi-building text-primary me-1"></i>Bank Transfer
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-payment text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small mb-1">Payment Option</h6>
+                                    <div class="fw-medium">
+                                        {% if payment.payment_option == 'FULL' %}
+                                            <span class="badge bg-primary">Full Payment</span>
+                                        {% else %}
+                                            <span class="badge bg-info text-dark">30% Advance</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-calendar3 text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small mb-1">Submitted On</h6>
+                                    <div class="fw-medium">{{ payment.created_at|date:"M d, Y h:i A" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% if payment.transaction_ref %}
+                        <div class="col-12">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-link-45deg text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small mb-1">Transaction Reference</h6>
+                                    <div class="fw-mono">{{ payment.transaction_ref }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if booking or payment.booking %}
+            {% with active_booking=booking|default:payment.booking %}
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-calendar-check text-primary fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">Booking Information</h5>
+                            <small class="text-muted">Your booking details</small>
+                        </div>
+                        <span class="badge bg-primary ms-auto px-3 py-2">{{ active_booking.booking_id }}</span>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted small mb-1">Destination</h6>
+                            <div class="fw-medium">
+                                {% if active_booking.package %}
+                                    {{ active_booking.package.name }}
+                                {% elif active_booking.custom_trip %}
+                                    {{ active_booking.custom_trip.title|default:"Custom Trip" }}
+                                {% else %}
+                                    Travel Package
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted small mb-1">Booking Status</h6>
+                            <div>
+                                {% if active_booking.status == 'PENDING' %}
+                                    <span class="badge bg-warning text-dark">Pending Payment</span>
+                                {% elif active_booking.status == 'CONFIRMED' %}
+                                    <span class="badge bg-success">Confirmed</span>
+                                {% elif active_booking.status == 'TRIP_STARTED' %}
+                                    <span class="badge bg-primary">Trip Started</span>
+                                {% elif active_booking.status == 'COMPLETED' %}
+                                    <span class="badge bg-secondary">Completed</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Cancelled</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted small mb-1">Travel Date</h6>
+                            <div class="fw-medium">{{ active_booking.travel_date|date:"M d, Y" }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted small mb-1">Return Date</h6>
+                            <div class="fw-medium">
+                                {% if active_booking.return_date %}
+                                    {{ active_booking.return_date|date:"M d, Y" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted small mb-1">Travelers</h6>
+                            <div class="fw-medium">{{ active_booking.adults }}A {% if active_booking.children > 0 %}{{ active_booking.children }}C{% endif %} {% if active_booking.infants > 0 %}{{ active_booking.infants }}I{% endif %}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted small mb-1">Total Cost</h6>
+                            <div class="fw-bold">Rs. {{ active_booking.total_cost }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            {% endif %}
+
+            {% if ticket or payment.ticket %}
+            {% with active_ticket=ticket|default:payment.ticket %}
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-ticket-detailed text-primary fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">Ticket Information</h5>
+                            <small class="text-muted">Your ticket details</small>
+                        </div>
+                        <span class="badge bg-primary ms-auto px-3 py-2">{{ active_ticket.ticket_number }}</span>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="bg-light rounded-3 p-3 mb-4">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div class="text-center">
+                                <h6 class="text-muted small mb-1">Origin</h6>
+                                <div class="fw-bold fs-5">{{ active_ticket.origin }}</div>
+                            </div>
+                            <i class="bi bi-arrow-right-circle fs-3 text-primary"></i>
+                            <div class="text-center">
+                                <h6 class="text-muted small mb-1">Destination</h6>
+                                <div class="fw-bold fs-5">{{ active_ticket.destination }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted small mb-1">Travel Date</h6>
+                            <div class="fw-medium">
+                                {{ active_ticket.travel_date|date:"M d, Y" }}
+                                {% if active_ticket.travel_time %}
+                                    at {{ active_ticket.travel_time|time:"h:i A" }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted small mb-1">Ticket Type</h6>
+                            <div class="fw-medium">
+                                {% if active_ticket.ticket_type == 'BUS' %}
+                                    <span class="badge bg-info text-dark"><i class="bi bi-bus-front me-1"></i>Bus</span>
+                                {% else %}
+                                    <span class="badge bg-primary"><i class="bi bi-airplane me-1"></i>Flight</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted small mb-1">Passengers</h6>
+                            <div class="fw-medium">{{ active_ticket.passenger_count }} Passenger{% if active_ticket.passenger_count != 1 %}s{% endif %}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted small mb-1">Total Price</h6>
+                            <div class="fw-bold">Rs. {{ active_ticket.total_price }}</div>
+                        </div>
+                        {% if active_ticket.operator_name %}
+                        <div class="col-md-6">
+                            <h6 class="text-muted small mb-1">Operator</h6>
+                            <div class="fw-medium">{{ active_ticket.operator_name }}</div>
+                        </div>
+                        {% endif %}
+                        {% if active_ticket.seat_numbers %}
+                        <div class="col-md-6">
+                            <h6 class="text-muted small mb-1">Seat Numbers</h6>
+                            <div class="fw-medium">{{ active_ticket.seat_numbers }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            {% endif %}
+
+            <div class="card shadow-sm border-0 mb-4 bg-warning bg-opacity-10 border-start border-4 border-warning">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                            <i class="bi bi-info-circle text-white"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-2">What's Next?</h6>
+                            <p class="text-muted mb-0 small">
+                                Our team will verify your payment within 24 hours. You will receive an email confirmation once the payment is approved.
+                                You can track your payment status from the dashboard. If you have any questions, please contact our support team.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                <a href="/dashboard/" class="btn btn-primary btn-lg px-5">
+                    <i class="bi bi-speedometer2 me-2"></i>Go to Dashboard
+                </a>
+                {% if booking or payment.booking %}
+                <a href="/dashboard/#bookings" class="btn btn-outline-secondary btn-lg px-5">
+                    <i class="bi bi-calendar-check me-2"></i>View My Bookings
+                </a>
+                {% else %}
+                <a href="{% url 'tickets:ticket_list' %}" class="btn btn-outline-secondary btn-lg px-5">
+                    <i class="bi bi-ticket-detailed me-2"></i>View My Tickets
+                </a>
+                {% endif %}
+                <a href="/" class="btn btn-outline-primary btn-lg px-5">
+                    <i class="bi bi-house me-2"></i>Back to Home
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

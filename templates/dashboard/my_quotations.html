@@ -1,0 +1,75 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Quotation Inbox - TravelReady{% endblock %}
+{% block dashboard_page_title %}Quotation Inbox{% endblock %}
+
+{% block dashboard_content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <p class="text-muted mb-0" style="font-size:0.9rem;">View and respond to travel quotations from our team</p>
+    <a href="{% url 'custom_trips:quotation_request' %}" class="tr-btn tr-btn-primary tr-btn-sm">
+        <i class="bi bi-envelope-plus"></i> Request Quote
+    </a>
+</div>
+
+{% if quotations %}
+<div class="d-flex flex-column gap-3">
+    {% for q in quotations %}
+    <div class="tr-booking-card animate-fadeInUp">
+        <div class="d-flex flex-wrap gap-3 align-items-start justify-content-between">
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                    <span style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;">
+                        Quote #{{ q.id|stringformat:"04d" }}
+                    </span>
+                    {% if q.status == 'PENDING' %}<span class="tr-badge tr-badge-warning"><span class="tr-badge-dot"></span>Awaiting Quote</span>
+                    {% elif q.status == 'QUOTED' %}<span class="tr-badge tr-badge-info"><span class="tr-badge-dot"></span>Quote Ready</span>
+                    {% elif q.status == 'ACCEPTED' %}<span class="tr-badge tr-badge-success"><span class="tr-badge-dot"></span>Accepted</span>
+                    {% elif q.status == 'REJECTED' %}<span class="tr-badge tr-badge-danger"><span class="tr-badge-dot"></span>Rejected</span>
+                    {% else %}<span class="tr-badge tr-badge-secondary"><span class="tr-badge-dot"></span>{{ q.get_status_display }}</span>{% endif %}
+                </div>
+                <h5 class="fw-bold mb-1">{{ q.destination }}</h5>
+                <div class="d-flex flex-wrap gap-3 mb-2">
+                    <span style="font-size:0.82rem;color:#64748b;"><i class="bi bi-calendar3 me-1"></i>{{ q.travel_date|date:"F d, Y"|default:"Flexible" }}</span>
+                    <span style="font-size:0.82rem;color:#64748b;"><i class="bi bi-people me-1"></i>{{ q.num_adults }} Adults{% if q.num_children %}, {{ q.num_children }} Children{% endif %}</span>
+                    <span style="font-size:0.82rem;color:#64748b;"><i class="bi bi-clock me-1"></i>{{ q.num_days }} Days</span>
+                    <span style="font-size:0.82rem;color:#64748b;"><i class="bi bi-send me-1"></i>Requested {{ q.created_at|date:"M d, Y" }}</span>
+                </div>
+                {% if q.notes %}
+                <p style="font-size:0.85rem;color:#64748b;margin-bottom:0;background:#f8fafc;padding:0.75rem 1rem;border-radius:8px;border-left:3px solid #e2e8f0;">
+                    {{ q.notes|truncatechars:200 }}
+                </p>
+                {% endif %}
+            </div>
+
+            <div class="text-end" style="min-width: 180px;">
+                {% if q.quoted_price %}
+                <div style="font-size:0.75rem;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Quoted Price</div>
+                <div style="font-size:1.5rem;font-weight:800;color:#059669;">Rs. {{ q.quoted_price }}</div>
+                {% else %}
+                <div style="font-size:0.85rem;color:#94a3b8;font-style:italic;">Price pending...</div>
+                {% endif %}
+                <div class="d-flex gap-2 justify-content-end mt-3 flex-wrap">
+                    <a href="{% url 'custom_trips:quotation_detail' q.id %}" class="tr-btn tr-btn-secondary tr-btn-sm">
+                        <i class="bi bi-eye"></i> View
+                    </a>
+                    {% if q.status == 'QUOTED' %}
+                    <a href="{% url 'custom_trips:quotation_accept' q.id %}" class="tr-btn tr-btn-primary tr-btn-sm">
+                        <i class="bi bi-check-circle"></i> Accept
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="tr-empty-state">
+    <div class="empty-icon"><i class="bi bi-chat-square-text"></i></div>
+    <h4>No Quotations Yet</h4>
+    <p>Request a quote for your dream trip and our travel experts will get back to you with the best options.</p>
+    <a href="{% url 'custom_trips:quotation_request' %}" class="tr-btn tr-btn-primary">
+        <i class="bi bi-envelope-plus me-2"></i>Request a Quote
+    </a>
+</div>
+{% endif %}
+{% endblock %}

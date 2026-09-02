@@ -1,0 +1,414 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ticket Payment - TravelReady{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            <div class="mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'tickets:ticket_list' %}">Tickets</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Payment</li>
+                    </ol>
+                </nav>
+                <h2 class="mb-0"><i class="bi bi-ticket-detailed me-2"></i>Complete Your Ticket Payment</h2>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-primary text-white py-3">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="bi bi-ticket-detailed fs-4"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0">Ticket Information</h5>
+                                <small class="text-white-50">Review your ticket details before payment</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-white text-primary fs-6 px-3 py-2">{{ ticket.ticket_number }}</span>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-12">
+                            <div class="bg-light rounded-3 p-4">
+                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-4">
+                                    <div class="text-center text-md-start flex-grow-1">
+                                        <div class="d-flex flex-wrap align-items-center gap-3 justify-content-center justify-content-md-start">
+                                            <div>
+                                                <h6 class="text-muted small mb-1">Origin</h6>
+                                                <div class="fw-bold fs-5">{{ ticket.origin }}</div>
+                                            </div>
+                                            <div class="flex-shrink-0">
+                                                <i class="bi bi-arrow-right-circle fs-3 text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="text-muted small mb-1">Destination</h6>
+                                                <div class="fw-bold fs-5">{{ ticket.destination }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2 flex-shrink-0">
+                                        {% if ticket.ticket_type == 'BUS' %}
+                                            <span class="badge bg-info text-dark px-3 py-2"><i class="bi bi-bus-front me-1"></i>Bus</span>
+                                        {% else %}
+                                            <span class="badge bg-primary px-3 py-2"><i class="bi bi-airplane me-1"></i>Flight</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-calendar3 text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small mb-1">Travel Date</h6>
+                                    <div class="fw-medium">
+                                        {{ ticket.travel_date|date:"M d, Y" }}
+                                        {% if ticket.travel_time %}
+                                            at {{ ticket.travel_time|time:"h:i A" }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-calendar-event text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small mb-1">Return Date</h6>
+                                    <div class="fw-medium">
+                                        {% if ticket.return_date %}
+                                            {{ ticket.return_date|date:"M d, Y" }}
+                                        {% else %}
+                                            <span class="text-muted">One-way</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-person-badge text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small mb-1">Passengers</h6>
+                                    <div class="fw-medium">{{ ticket.passenger_count }} Passenger{% if ticket.passenger_count != 1 %}s{% endif %}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-currency-rupee text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small mb-1">Total Price</h6>
+                                    <div class="fs-4 fw-bold text-primary">Rs. {{ ticket.total_price }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% if ticket.operator_name %}
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-building text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small mb-1">Operator</h6>
+                                    <div class="fw-medium">{{ ticket.operator_name }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if ticket.seat_numbers %}
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-diagram-3 text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted small mb-1">Seat Numbers</h6>
+                                    <div class="fw-medium">{{ ticket.seat_numbers }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h5 class="mb-0"><i class="bi bi-wallet2 me-2 text-primary"></i>Payment Option</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-check card-radio h-100 p-0 border rounded-3">
+                                    <input class="form-check-input d-none" type="radio" name="payment_option" id="opt_full" value="FULL" {% if form.payment_option.value == 'FULL' or not form.payment_option.value %}checked{% endif %}>
+                                    <label class="form-check-label w-100 p-3 d-block cursor-pointer" for="opt_full">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <div class="fw-bold">Full Payment</div>
+                                                <small class="text-muted">Pay the full amount now</small>
+                                            </div>
+                                            <div class="rounded-circle border border-2 border-primary d-flex align-items-center justify-content-center radio-check" style="width: 24px; height: 24px;">
+                                                <i class="bi bi-check-lg text-primary d-none"></i>
+                                            </div>
+                                        </div>
+                                        <div class="fs-3 fw-bold text-primary">Rs. {{ ticket.total_price }}</div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check card-radio h-100 p-0 border rounded-3">
+                                    <input class="form-check-input d-none" type="radio" name="payment_option" id="opt_partial" value="PARTIAL_30" {% if form.payment_option.value == 'PARTIAL_30' %}checked{% endif %}>
+                                    <label class="form-check-label w-100 p-3 d-block cursor-pointer" for="opt_partial">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <div class="fw-bold">30% Advance</div>
+                                                <small class="text-muted">Pay 30% now, remaining later</small>
+                                            </div>
+                                            <div class="rounded-circle border border-2 border-primary d-flex align-items-center justify-content-center radio-check" style="width: 24px; height: 24px;">
+                                                <i class="bi bi-check-lg text-primary d-none"></i>
+                                            </div>
+                                        </div>
+                                        {% with partial_amount=ticket.total_price %}
+                                        <div class="fs-3 fw-bold text-primary">Rs. {% widthratio partial_amount 1 0.3 %}</div>
+                                        {% endwith %}
+                                        <small class="text-muted">Remaining: Rs. {% widthratio ticket.total_price 1 0.7 %}</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        {% if form.payment_option.errors %}
+                            <div class="text-danger small mt-2">{{ form.payment_option.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h5 class="mb-0"><i class="bi bi-bank me-2 text-primary"></i>Payment Method</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="form-check card-radio h-100 p-0 border rounded-3">
+                                    <input class="form-check-input d-none" type="radio" name="payment_method" id="m_esewa" value="ESEWA" {% if form.payment_method.value == 'ESEWA' %}checked{% endif %}>
+                                    <label class="form-check-label w-100 p-3 d-block cursor-pointer text-center" for="m_esewa">
+                                        <div class="mb-2">
+                                            <i class="bi bi-phone fs-2 text-success"></i>
+                                        </div>
+                                        <div class="fw-bold">eSewa</div>
+                                        <small class="text-muted">Mobile wallet</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check card-radio h-100 p-0 border rounded-3">
+                                    <input class="form-check-input d-none" type="radio" name="payment_method" id="m_khalti" value="KHALTI" {% if form.payment_method.value == 'KHALTI' %}checked{% endif %}>
+                                    <label class="form-check-label w-100 p-3 d-block cursor-pointer text-center" for="m_khalti">
+                                        <div class="mb-2">
+                                            <i class="bi bi-wallet fs-2 text-warning"></i>
+                                        </div>
+                                        <div class="fw-bold">Khalti</div>
+                                        <small class="text-muted">Digital wallet</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check card-radio h-100 p-0 border rounded-3">
+                                    <input class="form-check-input d-none" type="radio" name="payment_method" id="m_bank" value="BANK_TRANSFER" {% if form.payment_method.value == 'BANK_TRANSFER' or not form.payment_method.value %}checked{% endif %}>
+                                    <label class="form-check-label w-100 p-3 d-block cursor-pointer text-center" for="m_bank">
+                                        <div class="mb-2">
+                                            <i class="bi bi-building fs-2 text-primary"></i>
+                                        </div>
+                                        <div class="fw-bold">Bank Transfer</div>
+                                        <small class="text-muted">Direct deposit</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        {% if form.payment_method.errors %}
+                            <div class="text-danger small mb-3">{{ form.payment_method.errors }}</div>
+                        {% endif %}
+
+                        <div class="bg-light rounded-3 p-4" id="bank_details_section">
+                            <h6 class="mb-3"><i class="bi bi-info-circle me-2 text-primary"></i>Company Bank Details</h6>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <div class="bg-white rounded p-3 border">
+                                        <small class="text-muted d-block mb-1">Bank Name</small>
+                                        <div class="fw-medium">Nepal Investment Mega Bank Ltd.</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="bg-white rounded p-3 border">
+                                        <small class="text-muted d-block mb-1">Account Name</small>
+                                        <div class="fw-medium">TravelReady Pvt Ltd.</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="bg-white rounded p-3 border">
+                                        <small class="text-muted d-block mb-1">Account Number</small>
+                                        <div class="fw-medium">0123456789012</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="bg-white rounded p-3 border">
+                                        <small class="text-muted d-block mb-1">Branch</small>
+                                        <div class="fw-medium">Thamel, Kathmandu</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="id_bank_name" class="form-label fw-medium">Your Bank Name <span class="text-danger">*</span></label>
+                                    {{ form.bank_name }}
+                                    {% if form.bank_name.errors %}
+                                        <div class="text-danger small">{{ form.bank_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_bank_account_number" class="form-label fw-medium">Your Account Number <span class="text-danger">*</span></label>
+                                    {{ form.bank_account_number }}
+                                    {% if form.bank_account_number.errors %}
+                                        <div class="text-danger small">{{ form.bank_account_number.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_depositor_name" class="form-label fw-medium">Depositor Name <span class="text-danger">*</span></label>
+                                    {{ form.depositor_name }}
+                                    {% if form.depositor_name.errors %}
+                                        <div class="text-danger small">{{ form.depositor_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_deposit_date" class="form-label fw-medium">Deposit Date <span class="text-danger">*</span></label>
+                                    {{ form.deposit_date }}
+                                    {% if form.deposit_date.errors %}
+                                        <div class="text-danger small">{{ form.deposit_date.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="gateway_details_section" class="d-none">
+                            <div class="bg-light rounded-3 p-4">
+                                <h6 class="mb-3"><i class="bi bi-info-circle me-2 text-primary"></i>Wallet Details</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="bg-white rounded p-3 border">
+                                            <small class="text-muted d-block mb-1">eSewa Number</small>
+                                            <div class="fw-medium">9801234567</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="bg-white rounded p-3 border">
+                                            <small class="text-muted d-block mb-1">Khalti Number</small>
+                                            <div class="fw-medium">9801234567</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="id_transaction_ref" class="form-label fw-medium">Transaction Reference ID <span class="text-danger">*</span></label>
+                                    {{ form.transaction_ref }}
+                                    <div class="form-text">Enter the transaction/ref number from your payment (eSewa/Khalti ID or Bank voucher no.)</div>
+                                    {% if form.transaction_ref.errors %}
+                                        <div class="text-danger small">{{ form.transaction_ref.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_payment_receipt" class="form-label fw-medium">Upload Payment Receipt <span class="text-danger">*</span></label>
+                                    {{ form.payment_receipt }}
+                                    <div class="form-text">Upload scanned deposit voucher or payment screenshot (JPG, PNG)</div>
+                                    {% if form.payment_receipt.errors %}
+                                        <div class="text-danger small">{{ form.payment_receipt.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{% url 'tickets:ticket_list' %}" class="btn btn-outline-secondary btn-lg px-5">
+                        <i class="bi bi-arrow-left me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                        <i class="bi bi-send-check me-2"></i>Submit Payment
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-radio input:checked + label {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.03);
+        box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+    }
+    .card-radio input:checked + label .radio-check {
+        background-color: #0d6efd;
+    }
+    .card-radio input:checked + label .radio-check i {
+        color: white !important;
+    }
+    .card-radio input:checked + label .radio-check i {
+        display: block !important;
+    }
+    .cursor-pointer {
+        cursor: pointer;
+    }
+</style>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const methodRadios = document.querySelectorAll('input[name="payment_method"]');
+    const bankSection = document.getElementById('bank_details_section');
+    const gatewaySection = document.getElementById('gateway_details_section');
+
+    function toggleSections() {
+        const selected = document.querySelector('input[name="payment_method"]:checked').value;
+        if (selected === 'BANK_TRANSFER') {
+            bankSection.classList.remove('d-none');
+            gatewaySection.classList.add('d-none');
+        } else {
+            bankSection.classList.add('d-none');
+            gatewaySection.classList.remove('d-none');
+        }
+    }
+
+    methodRadios.forEach(radio => radio.addEventListener('change', toggleSections));
+    toggleSections();
+});
+</script>
+{% endblock %}
+{% endblock %}

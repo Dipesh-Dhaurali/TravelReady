@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Frequently Asked Questions - TravelReady{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="position-relative py-5 text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);">
+    <div class="container py-5 text-center">
+        <span class="tr-badge tr-badge-primary mb-3 text-uppercase" style="letter-spacing: 1px; font-size: 0.75rem;">Support & Help</span>
+        <h1 class="display-4 fw-bold font-playfair mb-3">Frequently Asked Questions</h1>
+        <p class="text-white-50 mx-auto" style="max-width: 600px; font-size: 1.15rem; line-height: 1.7;">
+            Everything you need to know about booking, customized routes, payment verification, and safety.
+        </p>
+    </div>
+</div>
+
+<div class="container py-5" style="max-width: 900px;">
+    <div class="accordion accordion-flush d-flex flex-column gap-3" id="faqAccordion">
+        <!-- FAQ 1 -->
+        <div class="p-4 rounded-4 shadow-sm" style="background: white; border: 1px solid #e2e8f0;">
+            <h5 class="fw-bold mb-2 text-dark">
+                <i class="bi bi-question-circle text-primary me-2"></i> How do I book a tour package?
+            </h5>
+            <p class="text-muted small mb-0" style="line-height: 1.8;">
+                Browse through our <strong>Packages</strong> section, select your desired trip, pick your travel date and group size, and click <strong>Book Now</strong>. You'll be taken to our secure checkout where you can confirm details and make your payment.
+            </p>
+        </div>
+
+        <!-- FAQ 2 -->
+        <div class="p-4 rounded-4 shadow-sm" style="background: white; border: 1px solid #e2e8f0;">
+            <h5 class="fw-bold mb-2 text-dark">
+                <i class="bi bi-question-circle text-primary me-2"></i> How does the "Build My Trip" custom designer work?
+            </h5>
+            <p class="text-muted small mb-0" style="line-height: 1.8;">
+                Our <strong>Trip Builder</strong> allows you to select multiple destinations, choose your hotel tier (Budget, 3-Star, Luxury), add activities and select private or shared transport. It calculates your estimated total cost live and lets you save your draft or request an official quotation with 1 click.
+            </p>
+        </div>
+
+        <!-- FAQ 3 -->
+        <div class="p-4 rounded-4 shadow-sm" style="background: white; border: 1px solid #e2e8f0;">
+            <h5 class="fw-bold mb-2 text-dark">
+                <i class="bi bi-question-circle text-primary me-2"></i> What payment methods do you accept?
+            </h5>
+            <p class="text-muted small mb-0" style="line-height: 1.8;">
+                We support eSewa, Khalti, direct Bank Transfers with receipt upload, and standard credit/debit cards. Once submitted, our accounting team reviews the receipt and marks your booking verified and confirmed in your dashboard.
+            </p>
+        </div>
+
+        <!-- FAQ 4 -->
+        <div class="p-4 rounded-4 shadow-sm" style="background: white; border: 1px solid #e2e8f0;">
+            <h5 class="fw-bold mb-2 text-dark">
+                <i class="bi bi-question-circle text-primary me-2"></i> Where do I find my digital itineraries and vouchers?
+            </h5>
+            <p class="text-muted small mb-0" style="line-height: 1.8;">
+                Log in to your <strong>User Dashboard</strong> and navigate to <strong>Digital Itineraries</strong> or <strong>My Bookings</strong>. You can view your detailed daily schedule and download complete PDF travel itineraries right to your device.
+            </p>
+        </div>
+
+        <!-- FAQ 5 -->
+        <div class="p-4 rounded-4 shadow-sm" style="background: white; border: 1px solid #e2e8f0;">
+            <h5 class="fw-bold mb-2 text-dark">
+                <i class="bi bi-question-circle text-primary me-2"></i> What is your cancellation and refund policy?
+            </h5>
+            <p class="text-muted small mb-0" style="line-height: 1.8;">
+                Cancellations made 14 days or more before the departure date receive a full refund minus minimal transaction fees. For cancellations made within 7-13 days, a 50% refund applies. Please refer to our <strong>Terms of Service</strong> page for complete terms.
+            </p>
+        </div>
+    </div>
+
+    <!-- Still have questions banner -->
+    <div class="mt-5 p-4 rounded-4 text-center text-white" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
+        <h4 class="fw-bold mb-2">Still have questions?</h4>
+        <p class="text-white-50 mb-3 small">Our support team is available around the clock to assist you.</p>
+        <a href="{% url 'destinations_home:contact_us' %}" class="btn btn-light fw-bold px-4 py-2" style="border-radius: 8px; color: #4f46e5;">
+            <i class="bi bi-chat-dots-fill me-1"></i> Contact Support Desk
+        </a>
+    </div>
+</div>
+{% endblock %}

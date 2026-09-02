@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Travel Blog & Destination Guides - TravelReady{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="position-relative py-5 text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);">
+    <div class="container py-5 text-center">
+        <span class="tr-badge tr-badge-primary mb-3 text-uppercase" style="letter-spacing: 1px; font-size: 0.75rem;">Stories & Inspiration</span>
+        <h1 class="display-4 fw-bold font-playfair mb-3">Traveler's Chronicles & Guides</h1>
+        <p class="text-white-50 mx-auto" style="max-width: 650px; font-size: 1.15rem; line-height: 1.7;">
+            Expert advice, local secrets, trekking guides, and insider tips to help you prepare for your next epic expedition.
+        </p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4">
+        <!-- Article 1 -->
+        <div class="col-lg-4 col-md-6 animate-fadeInUp">
+            <div class="tr-card h-100 d-flex flex-column">
+                <div style="height: 220px; overflow: hidden;" class="position-relative">
+                    <img src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80" 
+                         class="w-100 h-100" style="object-fit: cover; transition: transform 0.4s ease;" alt="Himalayas Trekking">
+                    <span class="position-absolute top-0 start-0 m-3 tr-badge tr-badge-primary">Trekking Guide</span>
+                </div>
+                <div class="card-body p-4 d-flex flex-column flex-grow-1">
+                    <span class="text-muted small mb-2"><i class="bi bi-clock me-1"></i> 7 min read • Sep 2026</span>
+                    <h5 class="fw-bold mb-2">Essential Gear Checklist for Himalayan Treks</h5>
+                    <p class="text-muted small mb-3 flex-grow-1" style="line-height: 1.7;">
+                        From high-altitude down jackets to electrolyte salts and water purifiers—everything you need for a safe and comfortable alpine journey.
+                    </p>
+                    <a href="{% url 'destinations:destination_list' %}" class="text-primary fw-bold text-decoration-none small mt-auto">
+                        Explore Related Destinations <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Article 2 -->
+        <div class="col-lg-4 col-md-6 animate-fadeInUp">
+            <div class="tr-card h-100 d-flex flex-column">
+                <div style="height: 220px; overflow: hidden;" class="position-relative">
+                    <img src="https://images.unsplash.com/photo-1518002171953-a080ee817e1f?auto=format&fit=crop&w=800&q=80" 
+                         class="w-100 h-100" style="object-fit: cover; transition: transform 0.4s ease;" alt="Pokhara Phewa Lake">
+                    <span class="position-absolute top-0 start-0 m-3 tr-badge tr-badge-success">City Guide</span>
+                </div>
+                <div class="card-body p-4 d-flex flex-column flex-grow-1">
+                    <span class="text-muted small mb-2"><i class="bi bi-clock me-1"></i> 5 min read • Aug 2026</span>
+                    <h5 class="fw-bold mb-2">48 Hours in Pokhara: Lakeside Magic & Mountain Views</h5>
+                    <p class="text-muted small mb-3 flex-grow-1" style="line-height: 1.7;">
+                        The ultimate weekend itinerary including Sarangkot sunrise, paragliding over Phewa Lake, and cozy lakeside café culture.
+                    </p>
+                    <a href="{% url 'packages:package_list' %}" class="text-primary fw-bold text-decoration-none small mt-auto">
+                        View Pokhara Packages <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Article 3 -->
+        <div class="col-lg-4 col-md-6 animate-fadeInUp">
+            <div class="tr-card h-100 d-flex flex-column">
+                <div style="height: 220px; overflow: hidden;" class="position-relative">
+                    <img src="https://images.unsplash.com/photo-1570789210967-2cac24afeb00?auto=format&fit=crop&w=800&q=80" 
+                         class="w-100 h-100" style="object-fit: cover; transition: transform 0.4s ease;" alt="Chitwan Safari">
+                    <span class="position-absolute top-0 start-0 m-3 tr-badge tr-badge-info">Wildlife Safari</span>
+                </div>
+                <div class="card-body p-4 d-flex flex-column flex-grow-1">
+                    <span class="text-muted small mb-2"><i class="bi bi-clock me-1"></i> 6 min read • Jul 2026</span>
+                    <h5 class="fw-bold mb-2">Spotting One-Horned Rhinos in Chitwan National Park</h5>
+                    <p class="text-muted small mb-3 flex-grow-1" style="line-height: 1.7;">
+                        A detailed guide to jeep safaris, bird-watching tours, and ethical elephant encounters deep inside Nepal’s oldest national park.
+                    </p>
+                    <a href="{% url 'custom_trips:builder' %}" class="text-primary fw-bold text-decoration-none small mt-auto">
+                        Build Safari Itinerary <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

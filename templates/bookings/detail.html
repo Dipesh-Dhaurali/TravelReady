@@ -1,0 +1,506 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Booking {{ booking.booking_id }} - TravelReady{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+    .info-card {
+        background: #fff;
+        border-radius: 0.75rem;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+    .info-card-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .info-card-header h5 {
+        margin: 0;
+        font-weight: 600;
+    }
+    .info-card-body {
+        padding: 1.25rem;
+    }
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    .info-label {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    .info-value {
+        font-weight: 500;
+    }
+    .progress-steps-container {
+        padding: 1rem 0;
+    }
+    .step-circle {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1rem;
+        z-index: 2;
+        position: relative;
+        transition: all 0.3s;
+    }
+    .step-circle.done {
+        background: #198754;
+        color: white;
+        box-shadow: 0 2px 8px rgba(25,135,84,0.3);
+    }
+    .step-circle.active {
+        background: #0d6efd;
+        color: white;
+        box-shadow: 0 2px 8px rgba(13,110,253,0.3);
+    }
+    .step-circle.pending {
+        background: #f8f9fa;
+        color: #adb5bd;
+        border: 2px solid #dee2e6;
+    }
+    .step-connector {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        height: 4px;
+        width: 100%;
+        transform: translateY(-50%);
+        background: #dee2e6;
+        z-index: 1;
+    }
+    .step-connector.done {
+        background: #198754;
+    }
+    .step-wrapper {
+        position: relative;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .step-wrapper:last-child .step-connector {
+        display: none;
+    }
+    .step-label {
+        margin-top: 0.75rem;
+        font-size: 0.8rem;
+        text-align: center;
+        font-weight: 500;
+    }
+    .step-label.done {
+        color: #198754;
+    }
+    .step-label.active {
+        color: #0d6efd;
+    }
+    .step-label.pending {
+        color: #adb5bd;
+    }
+    .cost-total-row {
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-3">
+                    <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+                    <li class="breadcrumb-item"><a href="/dashboard/" class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Booking {{ booking.booking_id }}</li>
+                </ol>
+            </nav>
+
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                <div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <h1 class="h3 fw-bold mb-0">Booking Details</h1>
+                        <span class="badge bg-secondary status-badge">{{ booking.booking_id }}</span>
+                        {% if booking.status == 'PENDING' %}
+                            <span class="badge bg-warning text-dark status-badge"><i class="bi bi-clock me-1"></i>Pending Payment</span>
+                        {% elif booking.status == 'CONFIRMED' %}
+                            <span class="badge bg-success status-badge"><i class="bi bi-check-circle-fill me-1"></i>Confirmed</span>
+                        {% elif booking.status == 'TRIP_STARTED' %}
+                            <span class="badge bg-primary status-badge"><i class="bi bi-airplane-fill me-1"></i>Trip Started</span>
+                        {% elif booking.status == 'COMPLETED' %}
+                            <span class="badge bg-info status-badge"><i class="bi bi-trophy-fill me-1"></i>Completed</span>
+                        {% elif booking.status == 'CANCELLED' %}
+                            <span class="badge bg-danger status-badge"><i class="bi bi-x-circle-fill me-1"></i>Cancelled</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-muted mb-0">
+                        Booked on {{ booking.created_at|date:"F d, Y \a\t g:i A" }}
+                    </p>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'bookings:download_itinerary' booking.pk %}" class="btn btn-outline-primary">
+                        <i class="bi bi-download me-1"></i> Download Itinerary
+                    </a>
+                    {% if booking.status != 'COMPLETED' and booking.status != 'CANCELLED' %}
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                        <i class="bi bi-x-circle me-1"></i> Cancel Booking
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-card mb-4">
+        <div class="info-card-header">
+            <i class="bi bi-steps text-primary fs-5"></i>
+            <h5>Booking Progress</h5>
+            <span class="ms-auto text-muted small">{{ progress_percentage }}% Complete</span>
+        </div>
+        <div class="info-card-body">
+            <div class="progress mb-4" style="height: 8px; border-radius: 4px;">
+                <div class="progress-bar bg-gradient {% if booking.status == 'CANCELLED' %}bg-danger{% else %}{% endif %}" 
+                     role="progressbar" 
+                     style="width: {{ progress_percentage }}%; {% if booking.status == 'CANCELLED' %}background-color: #dc3545 !important;{% endif %}"
+                     aria-valuenow="{{ progress_percentage }}" 
+                     aria-valuemin="0" 
+                     aria-valuemax="100">
+                </div>
+            </div>
+
+            <div class="progress-steps-container">
+                <div class="d-flex align-items-start">
+                    {% for step in progress_steps %}
+                        {% with next_step=progress_steps|slice:forloop.counter|last %}
+                        <div class="step-wrapper">
+                            <div class="step-connector {% if step.done %}done{% endif %}"></div>
+                            <div class="step-circle {% if step.done %}done{% elif forloop.counter0 == booking.status and booking.status != 'CANCELLED' and step.done == False and progress_steps|dictsortreversed:'done'|first == step %}active{% else %}pending{% endif %}">
+                                {% if step.done %}
+                                    <i class="bi bi-check2 fs-5"></i>
+                                {% else %}
+                                    {{ forloop.counter }}
+                                {% endif %}
+                            </div>
+                            <div class="step-label {% if step.done %}done{% else %}pending{% endif %}">
+                                {{ step.name }}
+                            </div>
+                        </div>
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="info-card mb-4">
+                <div class="info-card-header">
+                    <i class="bi bi-info-circle-fill text-primary fs-5"></i>
+                    <h5>Trip Information</h5>
+                </div>
+                <div class="info-card-body">
+                    <div class="info-row">
+                        <span class="info-label">Trip / Package</span>
+                        <span class="info-value">
+                            {% if booking.package %}
+                                {{ booking.package.title }}
+                            {% elif booking.custom_trip %}
+                                {{ booking.custom_trip.title|default:"Custom Trip" }}
+                            {% else %}
+                                Travel Package
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if booking.package and booking.package.destination %}
+                    <div class="info-row">
+                        <span class="info-label">Destination</span>
+                        <span class="info-value"><i class="bi bi-geo-alt-fill text-primary me-1"></i>{{ booking.package.destination.name }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="info-row">
+                        <span class="info-label">Travel Date</span>
+                        <span class="info-value"><i class="bi bi-calendar3 text-primary me-1"></i>{{ booking.travel_date|date:"l, F d, Y" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Return Date</span>
+                        <span class="info-value">
+                            {% if booking.return_date %}
+                                <i class="bi bi-calendar-check text-primary me-1"></i>{{ booking.return_date|date:"l, F d, Y" }}
+                            {% else %}
+                                <span class="text-muted">Not specified</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if booking.return_date %}
+                    <div class="info-row">
+                        <span class="info-label">Duration</span>
+                        <span class="info-value">
+                            {% with booking.return_date|timeuntil:booking.travel_date as duration %}
+                                {{ duration }}
+                            {% endwith %}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="info-card mb-4">
+                <div class="info-card-header">
+                    <i class="bi bi-people-fill text-primary fs-5"></i>
+                    <h5>Travelers</h5>
+                </div>
+                <div class="info-card-body">
+                    <div class="row mb-3">
+                        <div class="col-4">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="display-6 text-primary"><i class="bi bi-person-fill"></i></div>
+                                <div class="h4 fw-bold mt-2 mb-0">{{ booking.adults }}</div>
+                                <div class="small text-muted">Adults</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="display-6 text-primary"><i class="bi bi-person"></i></div>
+                                <div class="h4 fw-bold mt-2 mb-0">{{ booking.children }}</div>
+                                <div class="small text-muted">Children</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="display-6 text-primary"><i class="bi bi-baby"></i></div>
+                                <div class="h4 fw-bold mt-2 mb-0">{{ booking.infants }}</div>
+                                <div class="small text-muted">Infants</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Total Travelers</span>
+                        <span class="info-value fw-bold">{{ booking.adults|add:booking.children|add:booking.infants }} persons</span>
+                    </div>
+                    {% if booking.traveler_names %}
+                    <div class="info-row">
+                        <span class="info-label">Traveler Names</span>
+                        <span class="info-value text-end">{{ booking.traveler_names|linebreaksbr }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="info-card mb-4">
+                <div class="info-card-header">
+                    <i class="bi bi-telephone-fill text-primary fs-5"></i>
+                    <h5>Emergency Contact</h5>
+                </div>
+                <div class="info-card-body">
+                    <div class="info-row">
+                        <span class="info-label">Contact Name</span>
+                        <span class="info-value">
+                            {% if booking.emergency_contact_name %}
+                                {{ booking.emergency_contact_name }}
+                            {% else %}
+                                <span class="text-muted">Not provided</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Contact Phone</span>
+                        <span class="info-value">
+                            {% if booking.emergency_contact_phone %}
+                                <i class="bi bi-telephone text-primary me-1"></i>{{ booking.emergency_contact_phone }}
+                            {% else %}
+                                <span class="text-muted">Not provided</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {% if booking.special_requirements %}
+            <div class="info-card mb-4">
+                <div class="info-card-header">
+                    <i class="bi bi-chat-left-text-fill text-primary fs-5"></i>
+                    <h5>Special Requirements</h5>
+                </div>
+                <div class="info-card-body">
+                    <p class="mb-0 lh-lg">{{ booking.special_requirements|linebreaksbr }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="info-card mb-4">
+                <div class="info-card-header">
+                    <i class="bi bi-currency-rupee text-primary fs-5"></i>
+                    <h5>Payment Summary</h5>
+                </div>
+                <div class="info-card-body">
+                    <div class="info-row">
+                        <span class="info-label">Base Cost</span>
+                        <span class="info-value">Rs. {{ booking.total_cost }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Payment Option</span>
+                        <span class="info-value">
+                            {% if booking.payment_option == 'FULL' %}
+                                <span class="badge bg-success">Full Payment</span>
+                            {% else %}
+                                <span class="badge bg-info text-dark">30% Advance</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Payment Status</span>
+                        <span class="info-value">
+                            {% if booking.payment_verified %}
+                                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Verified</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pending</span>
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="cost-total-row">
+                        <div class="info-row border-0">
+                            <span class="text-muted">Total Cost</span>
+                            <span class="h5 fw-bold mb-0">Rs. {{ booking.total_cost }}</span>
+                        </div>
+                        <hr class="my-2">
+                        <div class="info-row border-0">
+                            <span class="text-success">Amount Paid</span>
+                            <span class="fw-bold text-success">Rs. {{ booking.amount_paid }}</span>
+                        </div>
+                        {% if booking.amount_paid < booking.total_cost %}
+                        <div class="info-row border-0">
+                            <span class="text-danger">Balance Due</span>
+                            <span class="fw-bold text-danger">Rs. {{ booking.total_cost|floatformat:2 }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if booking.status == 'PENDING' and not booking.payment_verified %}
+                    <div class="d-grid mt-3">
+                        <a href="{% url 'payments:payment_page' booking.booking_id %}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-credit-card-fill me-2"></i>Complete Payment
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if booking.payments.all %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <i class="bi bi-receipt text-primary fs-5"></i>
+                    <h5>Payment History</h5>
+                </div>
+                <div class="info-card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for payment in booking.payments.all %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fw-bold">{{ payment.payment_ref }}</div>
+                                    <div class="small text-muted">{{ payment.created_at|date:"M d, Y" }}</div>
+                                    <div class="small">{{ payment.get_payment_method_display }}</div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold">Rs. {{ payment.amount }}</div>
+                                    {% if payment.verification_status == 'APPROVED' %}
+                                        <span class="badge bg-success small">Approved</span>
+                                    {% elif payment.verification_status == 'PENDING' %}
+                                        <span class="badge bg-warning text-dark small">Pending</span>
+                                    {% else %}
+                                        <span class="badge bg-danger small">Rejected</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="cancelModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Cancel Booking
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Are you sure you want to cancel booking <strong>{{ booking.booking_id }}</strong>?</p>
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    <strong>Please note:</strong>
+                    <ul class="mb-0 mt-2 ps-3">
+                        <li>This action cannot be undone.</li>
+                        <li>Cancellation refunds are subject to our cancellation policy.</li>
+                        <li>Please contact support for refund-related queries.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-arrow-left me-1"></i>Go Back
+                </button>
+                <form method="POST" action="{% url 'bookings:cancel_booking' booking.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-x-circle-fill me-1"></i>Yes, Cancel Booking
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const steps = document.querySelectorAll('.step-circle');
+        const labels = document.querySelectorAll('.step-label');
+        
+        let foundActive = false;
+        steps.forEach((step, index) => {
+            if (step.classList.contains('done')) {
+                return;
+            }
+            if (!foundActive && !step.classList.contains('done')) {
+                step.classList.remove('pending');
+                step.classList.add('active');
+                labels[index].classList.remove('pending');
+                labels[index].classList.add('active');
+                foundActive = true;
+            }
+        });
+    });
+</script>
+{% endblock %}

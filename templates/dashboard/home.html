@@ -1,0 +1,234 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}My Dashboard - TravelReady{% endblock %}
+{% block dashboard_page_title %}Overview{% endblock %}
+
+{% block dashboard_content %}
+<!-- Welcome Banner -->
+<div class="mb-4 p-4 rounded-3 animate-fadeIn" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; position: relative; overflow: hidden;">
+    <div style="position: absolute; top: -30px; right: -30px; width: 180px; height: 180px; border-radius: 50%; background: rgba(255,255,255,0.05);"></div>
+    <div style="position: absolute; bottom: -40px; right: 80px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.07);"></div>
+    <div class="position-relative">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h2 class="fw-bold mb-1" style="color: white; font-size: 1.5rem;">
+                    Welcome back, {{ user.first_name|default:user.username }}! 👋
+                </h2>
+                <p class="mb-0" style="color: rgba(255,255,255,0.75); font-size: 0.9rem;">
+                    Here's an overview of your travel activity and upcoming trips.
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'packages:package_list' %}" class="btn btn-sm" style="background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.25); border-radius: 8px; font-weight: 600; font-size: 0.8rem;">
+                    <i class="bi bi-compass me-1"></i> Explore
+                </a>
+                <a href="{% url 'custom_trips:trip_builder' %}" class="btn btn-sm" style="background: white; color: #4f46e5; border-radius: 8px; font-weight: 700; font-size: 0.8rem;">
+                    <i class="bi bi-plus me-1"></i> New Trip
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Grid -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="tr-stat-card animate-fadeInUp">
+            <div class="d-flex align-items-start justify-content-between mb-3">
+                <div>
+                    <div class="stat-label mb-1">Total Bookings</div>
+                    <div class="stat-value">{{ total_bookings|default:0 }}</div>
+                </div>
+                <div class="stat-icon" style="background:#eef2ff;">
+                    <i class="bi bi-calendar-check" style="color:#4f46e5;"></i>
+                </div>
+            </div>
+            <a href="{% url 'dashboard:my_bookings' %}" style="font-size:0.78rem;color:#4f46e5;text-decoration:none;font-weight:600;">View all <i class="bi bi-arrow-right"></i></a>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="tr-stat-card animate-fadeInUp delay-1">
+            <div class="d-flex align-items-start justify-content-between mb-3">
+                <div>
+                    <div class="stat-label mb-1">Upcoming Trips</div>
+                    <div class="stat-value">{{ upcoming_trips|default:0 }}</div>
+                </div>
+                <div class="stat-icon" style="background:#ecfdf5;">
+                    <i class="bi bi-airplane-fill" style="color:#059669;"></i>
+                </div>
+            </div>
+            {% if next_trip_days %}
+                <span class="stat-change positive"><i class="bi bi-clock"></i> {{ next_trip_days }} days away</span>
+            {% else %}
+                <span style="font-size:0.78rem;color:#94a3b8;">No upcoming trips</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="tr-stat-card animate-fadeInUp delay-2">
+            <div class="d-flex align-items-start justify-content-between mb-3">
+                <div>
+                    <div class="stat-label mb-1">Pending Payments</div>
+                    <div class="stat-value">{{ pending_payments|default:0 }}</div>
+                </div>
+                <div class="stat-icon" style="background:#fffbeb;">
+                    <i class="bi bi-cash-stack" style="color:#d97706;"></i>
+                </div>
+            </div>
+            {% if pending_payments %}
+                <span class="stat-change negative"><i class="bi bi-exclamation-circle"></i> Rs. {{ pending_amount }} pending</span>
+            {% else %}
+                <span style="font-size:0.78rem;color:#94a3b8;">All payments clear</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="tr-stat-card animate-fadeInUp delay-3">
+            <div class="d-flex align-items-start justify-content-between mb-3">
+                <div>
+                    <div class="stat-label mb-1">Saved Wishlist</div>
+                    <div class="stat-value">{{ saved_trips|default:0 }}</div>
+                </div>
+                <div class="stat-icon" style="background:#fdf2f8;">
+                    <i class="bi bi-heart-fill" style="color:#db2777;"></i>
+                </div>
+            </div>
+            <a href="{% url 'dashboard:my_wishlist' %}" style="font-size:0.78rem;color:#db2777;text-decoration:none;font-weight:600;">View wishlist <i class="bi bi-arrow-right"></i></a>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Bookings + Quick Actions -->
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="tr-table-card animate-fadeInUp delay-1">
+            <div class="table-header">
+                <h5>Recent Bookings</h5>
+                <a href="{% url 'dashboard:my_bookings' %}" class="tr-btn tr-btn-secondary tr-btn-sm">
+                    View All <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="tr-table">
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Destination</th>
+                            <th>Travel Date</th>
+                            <th>Status</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in recent_bookings %}
+                        <tr>
+                            <td><span style="font-weight:600;color:#4f46e5;font-size:0.85rem;">{{ booking.booking_id }}</span></td>
+                            <td style="font-size:0.875rem;font-weight:500;">
+                                {% if booking.package %}{{ booking.package.title }}{% elif booking.custom_trip %}{{ booking.custom_trip.trip_name|default:"Custom Trip" }}{% else %}Travel Package{% endif %}
+                            </td>
+                            <td style="font-size:0.875rem;color:#64748b;">{{ booking.travel_date|date:"M d, Y" }}</td>
+                            <td>
+                                {% if booking.status == 'CONFIRMED' %}<span class="tr-badge tr-badge-success"><span class="tr-badge-dot"></span>Confirmed</span>
+                                {% elif booking.status == 'PENDING' %}<span class="tr-badge tr-badge-warning"><span class="tr-badge-dot"></span>Pending</span>
+                                {% elif booking.status == 'TRIP_STARTED' %}<span class="tr-badge tr-badge-info"><span class="tr-badge-dot"></span>In Progress</span>
+                                {% elif booking.status == 'COMPLETED' %}<span class="tr-badge tr-badge-secondary"><span class="tr-badge-dot"></span>Completed</span>
+                                {% else %}<span class="tr-badge tr-badge-danger"><span class="tr-badge-dot"></span>Cancelled</span>{% endif %}
+                            </td>
+                            <td style="font-weight:700;color:#0f172a;">Rs. {{ booking.total_cost }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5">
+                                <div class="tr-empty-state" style="padding: 2rem;">
+                                    <div class="empty-icon"><i class="bi bi-calendar-x"></i></div>
+                                    <h4>No bookings yet</h4>
+                                    <p>Start your journey by exploring our amazing packages!</p>
+                                    <a href="{% url 'packages:package_list' %}" class="tr-btn tr-btn-primary tr-btn-sm">Browse Packages</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Quick Actions -->
+        <div class="tr-table-card p-0 mb-4" style="border-radius: var(--tr-radius-lg); overflow: hidden;">
+            <div class="table-header">
+                <h5>Quick Actions</h5>
+            </div>
+            <div class="p-3 d-flex flex-column gap-2">
+                <a href="{% url 'packages:package_list' %}" class="d-flex align-items-center gap-3 p-3 rounded-2 text-decoration-none" style="background:#eef2ff; transition: all 0.2s;" onmouseover="this.style.background='#e0e7ff'" onmouseout="this.style.background='#eef2ff'">
+                    <div style="width:40px;height:40px;border-radius:10px;background:#4f46e5;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="bi bi-search" style="color:white;"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700;font-size:0.875rem;color:#1e293b;">Browse Packages</div>
+                        <div style="font-size:0.75rem;color:#64748b;">Find your perfect trip</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto" style="color:#94a3b8;font-size:0.8rem;"></i>
+                </a>
+                <a href="{% url 'custom_trips:trip_builder' %}" class="d-flex align-items-center gap-3 p-3 rounded-2 text-decoration-none" style="background:#ecfdf5; transition: all 0.2s;" onmouseover="this.style.background='#d1fae5'" onmouseout="this.style.background='#ecfdf5'">
+                    <div style="width:40px;height:40px;border-radius:10px;background:#059669;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="bi bi-magic" style="color:white;"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700;font-size:0.875rem;color:#1e293b;">Build Custom Trip</div>
+                        <div style="font-size:0.75rem;color:#64748b;">Design your own adventure</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto" style="color:#94a3b8;font-size:0.8rem;"></i>
+                </a>
+                <a href="{% url 'dashboard:my_itineraries' %}" class="d-flex align-items-center gap-3 p-3 rounded-2 text-decoration-none" style="background:#fffbeb; transition: all 0.2s;" onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='#fffbeb'">
+                    <div style="width:40px;height:40px;border-radius:10px;background:#d97706;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="bi bi-journal-text" style="color:white;"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700;font-size:0.875rem;color:#1e293b;">View Itineraries</div>
+                        <div style="font-size:0.75rem;color:#64748b;">Download travel documents</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto" style="color:#94a3b8;font-size:0.8rem;"></i>
+                </a>
+                <a href="{% url 'tickets:search' %}" class="d-flex align-items-center gap-3 p-3 rounded-2 text-decoration-none" style="background:#ecfeff; transition: all 0.2s;" onmouseover="this.style.background='#cffafe'" onmouseout="this.style.background='#ecfeff'">
+                    <div style="width:40px;height:40px;border-radius:10px;background:#0891b2;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="bi bi-ticket-perforated" style="color:white;"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700;font-size:0.875rem;color:#1e293b;">Book Ticket</div>
+                        <div style="font-size:0.75rem;color:#64748b;">Flight & bus tickets</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto" style="color:#94a3b8;font-size:0.8rem;"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Upcoming Trips (if any) -->
+        {% if upcoming_bookings %}
+        <div class="tr-table-card p-0" style="border-radius: var(--tr-radius-lg); overflow: hidden;">
+            <div class="table-header">
+                <h5>Upcoming Trips</h5>
+            </div>
+            <div class="p-3 d-flex flex-column gap-2">
+                {% for booking in upcoming_bookings %}
+                <div class="p-3 rounded-2" style="background: var(--tr-gray-50); border: 1px solid var(--tr-gray-200);">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <i class="bi bi-airplane-fill" style="color:#4f46e5;font-size:0.85rem;"></i>
+                        <span style="font-weight:700;font-size:0.875rem;color:#1e293b;">
+                            {% if booking.package %}{{ booking.package.title }}{% elif booking.custom_trip %}{{ booking.custom_trip.trip_name }}{% else %}Custom Trip{% endif %}
+                        </span>
+                    </div>
+                    <div style="font-size:0.78rem;color:#64748b;"><i class="bi bi-calendar3 me-1"></i>{{ booking.travel_date|date:"F d, Y" }}</div>
+                    <div class="mt-1">
+                        <span class="tr-badge tr-badge-success tr-badge-sm" style="font-size:0.7rem;"><span class="tr-badge-dot"></span>{{ booking.get_status_display }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

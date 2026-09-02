@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ package.title }} - TravelReady{% endblock %}
+
+{% block extra_css %}
+<style>
+    .package-banner {
+        height: 380px;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+    }
+    .package-banner::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%);
+    }
+    .package-banner-content {
+        position: absolute;
+        bottom: 30px;
+        left: 0;
+        right: 0;
+        color: white;
+        z-index: 1;
+    }
+    .price-sidebar {
+        position: sticky;
+        top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="package-banner" style="background-image: url('{% if package.thumbnail %}{{ package.thumbnail.url }}{% endif %}');">
+    <div class="container package-banner-content">
+        <div class="d-flex flex-wrap gap-2 mb-2">
+            <span class="badge bg-secondary">{{ package.get_package_type_display }}</span>
+            <span class="badge bg-info">{{ package.base_days }} Days</span>
+            {% if package.is_popular %}<span class="badge bg-warning text-dark"><i class="bi bi-star-fill me-1"></i>POPULAR</span>{% endif %}
+            <span class="badge {% if package.status == 'Active' %}bg-success{% else %}bg-secondary{% endif %}">{{ package.status }}</span>
+        </div>
+        <h1 class="display-4 fw-bold">{{ package.title }}</h1>
+        <p class="lead">
+            <a href="{% url 'destinations:destination_detail' package.destination.slug %}" class="text-white text-decoration-none">
+                <i class="bi bi-geo-alt-fill me-1"></i>{{ package.destination.name }}
+            </a>
+        </p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-5">
+        <div class="col-lg-8">
+            {% if package.highlights %}
+            <div class="mb-4">
+                <h2 class="h4 fw-bold mb-3"><i class="bi bi-stars text-warning me-2"></i>Highlights</h2>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for highlight in package.highlights.split %}
+                    <span class="badge rounded-pill bg-light text-dark border p-2 px-3 small">{{ highlight }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="card-title mb-0"><i class="bi bi-check-circle-fill me-2"></i>Inclusions</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if package.inclusions %}
+                            <ul class="list-unstyled mb-0">
+                                {% for item in package.inclusions.split %}
+                                <li class="mb-2 d-flex align-items-start">
+                                    <i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>
+                                    <span>{{ item }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="text-muted mb-0">No inclusions specified.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="card-title mb-0"><i class="bi bi-x-circle-fill me-2"></i>Exclusions</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if package.exclusions %}
+                            <ul class="list-unstyled mb-0">
+                                {% for item in package.exclusions.split %}
+                                <li class="mb-2 d-flex align-items-start">
+                                    <i class="bi bi-x-circle-fill text-danger me-2 mt-1"></i>
+                                    <span>{{ item }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="text-muted mb-0">No exclusions specified.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if package.included_activities.all %}
+            <div class="mb-5">
+                <h2 class="h4 fw-bold mb-3"><i class="bi bi-activity text-info me-2"></i>Included Activities</h2>
+                <div class="row g-3">
+                    {% for act in package.included_activities.all %}
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            {% if act.image %}
+                            <img src="{{ act.image.url }}" class="card-img-top" style="height: 140px; object-fit: cover;" alt="{{ act.title }}">
+                            {% endif %}
+                            <div class="card-body">
+                                <h6 class="card-title fw-bold mb-1">{{ act.title }}</h6>
+                                <div class="d-flex gap-3 small text-muted">
+                                    <span>Adult: Rs. {{ act.adult_price }}</span>
+                                    <span>Child: Rs. {{ act.child_price }}</span>
+                                </div>
+                                <p class="small text-muted mt-1 mb-0"><i class="bi bi-clock"></i> {{ act.duration_hours }} hrs</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if package.description %}
+            <div class="mb-5">
+                <h2 class="h4 fw-bold mb-3"><i class="bi bi-file-text me-2"></i>Description</h2>
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4 lh-lg">
+                        {{ package.description|linebreaks }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if package.hotel %}
+            <div>
+                <h2 class="h4 fw-bold mb-3"><i class="bi bi-house-door-fill me-2"></i>Accommodation</h2>
+                <div class="card border-0 shadow-sm overflow-hidden">
+                    <div class="row g-0">
+                        {% if package.hotel.image %}
+                        <div class="col-md-4">
+                            <img src="{{ package.hotel.image.url }}" class="img-fluid h-100" style="object-fit: cover;" alt="{{ package.hotel.name }}">
+                        </div>
+                        {% endif %}
+                        <div class="{% if package.hotel.image %}col-md-8{% else %}col-12{% endif %}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title fw-bold">{{ package.hotel.name }}</h5>
+                                    <span class="badge bg-primary">{{ package.hotel.get_category_display }}</span>
+                                </div>
+                                <p class="text-primary fw-bold mb-2">Rs. {{ package.hotel.per_night_rate }} / night</p>
+                                {% if package.hotel.room_types %}
+                                <p class="text-muted small mb-2"><i class="bi bi-house-door"></i> Rooms: {{ package.hotel.room_types }}</p>
+                                {% endif %}
+                                {% if package.hotel.description %}
+                                <p class="card-text">{{ package.hotel.description }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="price-sidebar">
+                <div class="card border-0 shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="card-title mb-0"><i class="bi bi-tag-fill me-2"></i>Package Price</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-4 py-3 border-bottom">
+                            <p class="text-muted mb-1">Base Price</p>
+                            <h2 class="text-primary fw-bold display-6 mb-0">Rs. {{ package.base_price }}</h2>
+                            <p class="text-muted small mt-1">per person ({{ package.get_package_type_display }})</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <ul class="list-group list-group-flush small">
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span><i class="bi bi-calendar3 me-2 text-primary"></i>Duration</span>
+                                    <strong>{{ package.base_days }} Days</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span><i class="bi bi-geo-alt me-2 text-primary"></i>Destination</span>
+                                    <strong>{{ package.destination.name }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span><i class="bi bi-activity me-2 text-primary"></i>Activities</span>
+                                    <strong>{{ package.included_activities.count }} Included</strong>
+                                </li>
+                                {% if package.per_day_extra_cost %}
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span><i class="bi bi-plus-circle me-2 text-primary"></i>Extra Day Cost</span>
+                                    <strong>Rs. {{ package.per_day_extra_cost }}</strong>
+                                </li>
+                                {% endif %}
+                                {% if package.hotel %}
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span><i class="bi bi-house me-2 text-primary"></i>Hotel</span>
+                                    <strong>{{ package.hotel.get_category_display }}</strong>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'packages:package_book' package.slug %}" class="btn btn-primary btn-lg">
+                                <i class="bi bi-calendar-check-fill me-2"></i>Book This Package
+                            </a>
+                            <a href="{% url 'destinations:destination_detail' package.destination.slug %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-geo-alt me-2"></i>View Destination
+                            </a>
+                        </div>
+
+                        <div class="mt-4 p-3 bg-light rounded small">
+                            <p class="mb-1"><i class="bi bi-shield-check text-success me-1"></i>Secure Booking</p>
+                            <p class="mb-1"><i class="bi bi-headset text-info me-1"></i>24/7 Support</p>
+                            <p class="mb-0"><i class="bi bi-arrow-counterclockwise text-warning me-1"></i>Flexible Cancellation</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,482 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Booking Checkout - TravelReady{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cost-summary {
+        position: sticky;
+        top: 20px;
+    }
+    .trip-banner {
+        height: 200px;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        border-radius: 0.5rem;
+    }
+    .trip-banner::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.7), transparent 60%);
+        border-radius: 0.5rem;
+    }
+    .trip-banner-content {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        color: white;
+        z-index: 1;
+    }
+    .form-section {
+        background: #fff;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e9ecef;
+    }
+    .form-section-title {
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #0d6efd;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .cost-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px dashed #dee2e6;
+    }
+    .cost-row:last-child {
+        border-bottom: none;
+    }
+    .payment-option {
+        padding: 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .payment-option:hover {
+        border-color: #0d6efd;
+        background: #f8f9fa;
+    }
+    .payment-option input[type="radio"]:checked ~ .payment-option-content {
+        color: #0d6efd;
+    }
+    .payment-option:has(input[type="radio"]:checked) {
+        border-color: #0d6efd;
+        background: #e7f1ff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+                    {% if package %}
+                    <li class="breadcrumb-item"><a href="{% url 'packages:package_list' %}" class="text-decoration-none">Packages</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Checkout</li>
+                    {% elif custom_trip %}
+                    <li class="breadcrumb-item"><a href="{% url 'custom_trips:my_trips' %}" class="text-decoration-none">My Trips</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Checkout</li>
+                    {% else %}
+                    <li class="breadcrumb-item active" aria-current="page">Checkout</li>
+                    {% endif %}
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row g-5">
+        <div class="col-lg-8">
+            {% if package or custom_trip %}
+            <div class="trip-banner mb-4" style="background-image: url('{% if package and package.thumbnail %}{{ package.thumbnail.url }}{% else %}{% static 'images/placeholder.jpg' %}{% endif %}'); background-color: #6c757d;">
+                <div class="trip-banner-content">
+                    <h2 class="h4 fw-bold mb-1">
+                        {% if package %}
+                            {{ package.title }}
+                        {% elif custom_trip %}
+                            {{ custom_trip.title|default:"Custom Trip" }}
+                        {% endif %}
+                    </h2>
+                    <p class="mb-0 small opacity-90">
+                        <i class="bi bi-geo-alt-fill me-1"></i>
+                        {% if package and package.destination %}
+                            {{ package.destination.name }}
+                        {% elif custom_trip and custom_trip.destination %}
+                            {{ custom_trip.destination }}
+                        {% else %}
+                            Custom Destination
+                        {% endif %}
+                        {% if package %}
+                            &nbsp;·&nbsp;<i class="bi bi-calendar3 me-1"></i>{{ package.base_days }} Days
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            <form method="POST" novalidate>
+                {% csrf_token %}
+
+                <div class="form-section">
+                    <h3 class="form-section-title h5 mb-3">
+                        <i class="bi bi-calendar-range text-primary"></i>
+                        Travel Dates
+                    </h3>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.travel_date.id_for_label }}" class="form-label fw-medium">
+                                Travel Date <span class="text-danger">*</span>
+                            </label>
+                            {{ form.travel_date }}
+                            {% if form.travel_date.errors %}
+                                <div class="invalid-feedback d-block">{{ form.travel_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.return_date.id_for_label }}" class="form-label fw-medium">
+                                Return Date
+                            </label>
+                            {{ form.return_date }}
+                            {% if form.return_date.errors %}
+                                <div class="invalid-feedback d-block">{{ form.return_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title h5 mb-3">
+                        <i class="bi bi-people-fill text-primary"></i>
+                        Travelers
+                    </h3>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.adults.id_for_label }}" class="form-label fw-medium">
+                                Adults (12+) <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                                {{ form.adults }}
+                            </div>
+                            {% if form.adults.errors %}
+                                <div class="invalid-feedback d-block">{{ form.adults.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">Full price per person</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.children.id_for_label }}" class="form-label fw-medium">
+                                Children (2-11)
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                {{ form.children }}
+                            </div>
+                            {% if form.children.errors %}
+                                <div class="invalid-feedback d-block">{{ form.children.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">50% of adult price</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.infants.id_for_label }}" class="form-label fw-medium">
+                                Infants (0-1)
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-baby"></i></span>
+                                {{ form.infants }}
+                            </div>
+                            {% if form.infants.errors %}
+                                <div class="invalid-feedback d-block">{{ form.infants.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">10% of adult price</div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label for="{{ form.traveler_names.id_for_label }}" class="form-label fw-medium">
+                            Traveler Names
+                        </label>
+                        {{ form.traveler_names }}
+                        {% if form.traveler_names.errors %}
+                            <div class="invalid-feedback d-block">{{ form.traveler_names.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">Enter full names of all travelers, comma-separated.</div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title h5 mb-3">
+                        <i class="bi bi-telephone-fill text-primary"></i>
+                        Emergency Contact
+                    </h3>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.emergency_contact_name.id_for_label }}" class="form-label fw-medium">
+                                Contact Name
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                                {{ form.emergency_contact_name }}
+                            </div>
+                            {% if form.emergency_contact_name.errors %}
+                                <div class="invalid-feedback d-block">{{ form.emergency_contact_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.emergency_contact_phone.id_for_label }}" class="form-label fw-medium">
+                                Contact Phone
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                {{ form.emergency_contact_phone }}
+                            </div>
+                            {% if form.emergency_contact_phone.errors %}
+                                <div class="invalid-feedback d-block">{{ form.emergency_contact_phone.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title h5 mb-3">
+                        <i class="bi bi-chat-left-text-fill text-primary"></i>
+                        Special Requirements
+                    </h3>
+                    <div>
+                        {{ form.special_requirements }}
+                        {% if form.special_requirements.errors %}
+                            <div class="invalid-feedback d-block">{{ form.special_requirements.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">Any special requests, dietary needs, accessibility requirements, etc.</div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title h5 mb-3">
+                        <i class="bi bi-credit-card-fill text-primary"></i>
+                        Payment Option
+                    </h3>
+                    <div class="row g-3">
+                        {% for value, label in form.payment_option.field.choices %}
+                        <div class="col-md-6">
+                            <label class="payment-option d-block">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="radio" name="{{ form.payment_option.name }}" id="payment_{{ value }}" value="{{ value }}" {% if form.payment_option.value == value %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold ms-2" for="payment_{{ value }}">
+                                        {{ label }}
+                                    </label>
+                                </div>
+                                <div class="mt-2 small text-muted ms-4">
+                                    {% if value == 'FULL' %}
+                                        Pay the full amount now and get confirmation faster.
+                                    {% elif value == 'PARTIAL_30' %}
+                                        Pay 30% advance to reserve your booking. Balance due before travel.
+                                    {% endif %}
+                                </div>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if form.payment_option.errors %}
+                        <div class="invalid-feedback d-block mt-2">{{ form.payment_option.errors }}</div>
+                    {% endif %}
+                </div>
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="d-grid d-md-flex justify-content-md-end gap-2 mb-4">
+                    <a href="{% if package %}{% url 'packages:package_list' %}{% elif custom_trip %}{% url 'custom_trips:my_trips' %}{% else %}/{% endif %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                        <i class="bi bi-calendar-check-fill me-2"></i>Book Now
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="cost-summary">
+                <div class="card border-0 shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="card-title mb-0"><i class="bi bi-calculator-fill me-2"></i>Cost Summary</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if package or custom_trip %}
+                        <div class="mb-3 pb-3 border-bottom">
+                            <h6 class="fw-bold mb-1">
+                                {% if package %}{{ package.title }}{% elif custom_trip %}{{ custom_trip.title|default:"Custom Trip" }}{% endif %}
+                            </h6>
+                            <div class="text-muted small">
+                                {% if package and package.destination %}
+                                    <i class="bi bi-geo-alt me-1"></i>{{ package.destination.name }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div id="costBreakdown">
+                            <div class="cost-row">
+                                <span class="text-muted">
+                                    Base Price
+                                    {% if package %}
+                                        <small class="d-block">(per person)</small>
+                                    {% endif %}
+                                </span>
+                                <strong>
+                                    Rs. 
+                                    {% if package %}
+                                        {{ package.base_price|default:0 }}
+                                    {% elif custom_trip %}
+                                        {{ custom_trip.total_calculated_price|default:0 }}
+                                    {% elif quotation %}
+                                        {{ quotation.admin_quoted_price|default:quotation.budget|default:0 }}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </strong>
+                            </div>
+                            <div class="cost-row">
+                                <span class="text-muted">Adults <span class="badge bg-secondary" id="adultsBadge">1</span> ×</span>
+                                <strong id="adultsCost">Rs. 0</strong>
+                            </div>
+                            <div class="cost-row">
+                                <span class="text-muted">Children <span class="badge bg-secondary" id="childrenBadge">0</span> × 50%</span>
+                                <strong id="childrenCost">Rs. 0</strong>
+                            </div>
+                            <div class="cost-row">
+                                <span class="text-muted">Infants <span class="badge bg-secondary" id="infantsBadge">0</span> × 10%</span>
+                                <strong id="infantsCost">Rs. 0</strong>
+                            </div>
+                        </div>
+
+                        <hr class="my-3">
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="h5 fw-bold mb-0">Total Cost</span>
+                            <span class="h4 fw-bold text-primary mb-0" id="totalCost">Rs. 0</span>
+                        </div>
+
+                        <div class="bg-light p-3 rounded mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Due Today (30%):</span>
+                                <strong id="partialAmount">Rs. 0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Balance Later:</span>
+                                <strong id="balanceAmount">Rs. 0</strong>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mb-3">
+                            <div class="small d-flex align-items-center text-muted">
+                                <i class="bi bi-shield-check text-success me-2 fs-5"></i>
+                                <span>Secure payment with SSL encryption</span>
+                            </div>
+                            <div class="small d-flex align-items-center text-muted">
+                                <i class="bi bi-headset text-info me-2 fs-5"></i>
+                                <span>24/7 customer support</span>
+                            </div>
+                            <div class="small d-flex align-items-center text-muted">
+                                <i class="bi bi-arrow-counterclockwise text-warning me-2 fs-5"></i>
+                                <span>Free cancellation up to 7 days before</span>
+                            </div>
+                        </div>
+
+                        <div class="border-top pt-3">
+                            <p class="small text-muted mb-0">
+                                <i class="bi bi-info-circle me-1"></i>
+                                By clicking "Book Now", you agree to our Terms of Service and Privacy Policy.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const basePrice = parseFloat(
+        {% if package %}
+            {{ package.base_price|default:0 }}
+        {% elif custom_trip %}
+            {{ custom_trip.total_calculated_price|default:0 }}
+        {% elif quotation %}
+            {{ quotation.admin_quoted_price|default:quotation.budget|default:0 }}
+        {% else %}
+            0
+        {% endif %}
+    );
+
+    function formatCurrency(amount) {
+        return 'Rs. ' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function updateCosts() {
+        const adults = parseInt(document.getElementById('{{ form.adults.id_for_label }}').value) || 0;
+        const children = parseInt(document.getElementById('{{ form.children.id_for_label }}').value) || 0;
+        const infants = parseInt(document.getElementById('{{ form.infants.id_for_label }}').value) || 0;
+
+        const perPerson = basePrice > 0 ? basePrice : 0;
+        const adultsCost = adults * perPerson;
+        const childrenCost = children * perPerson * 0.5;
+        const infantsCost = infants * perPerson * 0.1;
+
+        let totalCost = adultsCost + childrenCost + infantsCost;
+        if (totalCost === 0 && basePrice > 0) {
+            totalCost = basePrice;
+        }
+
+        const partialAmount = totalCost * 0.3;
+        const balanceAmount = totalCost - partialAmount;
+
+        document.getElementById('adultsBadge').textContent = adults;
+        document.getElementById('childrenBadge').textContent = children;
+        document.getElementById('infantsBadge').textContent = infants;
+
+        document.getElementById('adultsCost').textContent = formatCurrency(adultsCost);
+        document.getElementById('childrenCost').textContent = formatCurrency(childrenCost);
+        document.getElementById('infantsCost').textContent = formatCurrency(infantsCost);
+        document.getElementById('totalCost').textContent = formatCurrency(totalCost);
+        document.getElementById('partialAmount').textContent = formatCurrency(partialAmount);
+        document.getElementById('balanceAmount').textContent = formatCurrency(balanceAmount);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('#{{ form.adults.id_for_label }}, #{{ form.children.id_for_label }}, #{{ form.infants.id_for_label }}').forEach(function(el) {
+            el.classList.add('form-control');
+            el.addEventListener('input', updateCosts);
+        });
+
+        document.querySelectorAll('input[type="date"], textarea, input[type="text"], input[type="tel"]').forEach(function(el) {
+            el.classList.add('form-control');
+        });
+
+        document.querySelectorAll('textarea').forEach(function(el) {
+            el.setAttribute('rows', '3');
+        });
+
+        updateCosts();
+    });
+</script>
+{% endblock %}

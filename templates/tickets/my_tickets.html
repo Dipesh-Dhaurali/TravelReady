@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}My Tickets - TravelReady{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h1 class="display-6 fw-bold mb-2">
+                    <i class="bi bi-ticket-perforated text-primary me-2"></i>My Tickets
+                </h1>
+                <p class="text-muted mb-0">View and manage all your booked tickets.</p>
+            </div>
+            <a href="{% url 'tickets:ticket_list' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Book New Ticket
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-white-50 small mb-1">Total Tickets</div>
+                            <div class="fw-bold fs-3">{{ tickets|length }}</div>
+                        </div>
+                        <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                            <i class="bi bi-ticket-detailed-fill fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-white-50 small mb-1">Confirmed</div>
+                            <div class="fw-bold fs-3">{{ tickets|dictsort:"status"|length }}</div>
+                        </div>
+                        <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                            <i class="bi bi-check-circle-fill fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-warning-emphasis small mb-1">Pending</div>
+                            <div class="fw-bold fs-3">
+                                {% with pending_count=0 %}
+                                {% for t in tickets %}{% if t.status == 'PENDING' %}{% endif %}{% endfor %}
+                                0
+                                {% endwith %}
+                            </div>
+                        </div>
+                        <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                            <i class="bi bi-clock-fill fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm bg-secondary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-white-50 small mb-1">Total Spent</div>
+                            <div class="fw-bold fs-3">
+                                Rs. {{ tickets.all|length }}
+                            </div>
+                        </div>
+                        <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                            <i class="bi bi-currency-rupee fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if tickets %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-4 py-3">Ticket Number</th>
+                            <th class="px-4 py-3">Type</th>
+                            <th class="px-4 py-3">Route</th>
+                            <th class="px-4 py-3">Date</th>
+                            <th class="px-4 py-3">Passengers</th>
+                            <th class="px-4 py-3">Price</th>
+                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3 text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in tickets %}
+                        <tr>
+                            <td class="px-4 py-3">
+                                <div class="fw-bold">{{ ticket.ticket_number }}</div>
+                                <div class="text-muted small">{{ ticket.operator_name|default:"-" }}</div>
+                            </td>
+                            <td class="px-4 py-3">
+                                {% if ticket.ticket_type == 'BUS' %}
+                                <span class="badge bg-info text-dark">
+                                    <i class="bi bi-bus-front me-1"></i>Bus
+                                </span>
+                                {% else %}
+                                <span class="badge bg-primary">
+                                    <i class="bi bi-airplane me-1"></i>Flight
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-semibold">{{ ticket.origin }}</span>
+                                    <i class="bi bi-arrow-right text-muted"></i>
+                                    <span class="fw-semibold">{{ ticket.destination }}</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div>{{ ticket.travel_date|date:"M d, Y" }}</div>
+                                {% if ticket.travel_time %}
+                                <div class="text-muted small">{{ ticket.travel_time|date:"h:i A" }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-people me-1"></i>{{ ticket.passenger_count }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="fw-semibold">Rs. {{ ticket.total_price }}</div>
+                                <div class="text-muted small">Rs. {{ ticket.price_per_person }}/person</div>
+                            </td>
+                            <td class="px-4 py-3">
+                                {% if ticket.status == 'PENDING' %}
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pending</span>
+                                {% elif ticket.status == 'CONFIRMED' %}
+                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Confirmed</span>
+                                {% elif ticket.status == 'CANCELLED' %}
+                                    <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Cancelled</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-end">
+                                <div class="d-flex gap-2 justify-content-end">
+                                    <a href="{% url 'tickets:ticket_detail' ticket.pk %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye me-1"></i> View
+                                    </a>
+                                    <a href="{% url 'tickets:download_ticket' ticket.pk %}" class="btn btn-outline-success btn-sm">
+                                        <i class="bi bi-download me-1"></i> Download
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 120px; height: 120px;">
+                <i class="bi bi-ticket-perforated display-4 text-muted"></i>
+            </div>
+            <h4 class="text-muted mb-2">No Tickets Yet</h4>
+            <p class="text-muted mb-4">You haven't booked any tickets yet. Start exploring our bus and flight schedules!</p>
+            <div class="d-flex gap-2 justify-content-center">
+                <a href="{% url 'tickets:ticket_list' %}" class="btn btn-primary">
+                    <i class="bi bi-bus-front me-1"></i> Browse Schedules
+                </a>
+                <a href="{% url 'tickets:ticket_search' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-search me-1"></i> Search Tickets
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %}Bus & Flight Tickets - TravelReady{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-3">Book Bus & Flight Tickets</h1>
+            <p class="text-muted mb-4">Compare schedules and book your journey with ease.</p>
+            <a href="{% url 'tickets:ticket_search' %}" class="btn btn-primary">
+                <i class="bi bi-search me-1"></i> Search Tickets
+            </a>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-4" id="ticketTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="bus-tab" data-bs-toggle="tab" data-bs-target="#bus" type="button" role="tab" aria-controls="bus" aria-selected="true">
+                <i class="bi bi-bus-front-fill me-2"></i>Bus
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="flights-tab" data-bs-toggle="tab" data-bs-target="#flights" type="button" role="tab" aria-controls="flights" aria-selected="false">
+                <i class="bi bi-airplane-fill me-2"></i>Flights
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="ticketTabsContent">
+        <div class="tab-pane fade show active" id="bus" role="tabpanel" aria-labelledby="bus-tab">
+            {% if schedules_by_type.Bus %}
+            <div class="row g-4">
+                {% for schedule in schedules_by_type.Bus %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h6 class="fw-bold text-primary mb-1">{{ schedule.operator_name }}</h6>
+                                    <span class="badge bg-info text-dark small"><i class="bi bi-bus-front me-1"></i>Bus</span>
+                                </div>
+                                <div class="text-end">
+                                    <div class="text-muted small">From</div>
+                                    <div class="fw-bold fs-5 text-primary">Rs. {{ schedule.price_per_person }}</div>
+                                    <div class="text-muted small">per person</div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <i class="bi bi-geo-alt-fill text-primary"></i>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="fw-semibold">{{ schedule.origin }}</div>
+                                                <div class="text-muted small">{{ schedule.departure_time|date:"h:i A" }}</div>
+                                            </div>
+                                            <i class="bi bi-arrow-right text-muted mx-2"></i>
+                                            <div class="text-end">
+                                                <div class="fw-semibold">{{ schedule.destination }}</div>
+                                                <div class="text-muted small">{{ schedule.arrival_time|date:"h:i A"|default:"--:--" }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center text-muted small mb-3">
+                                <span><i class="bi bi-people me-1"></i>{{ schedule.available_seats }} seats left</span>
+                                <span><i class="bi bi-calendar-week me-1"></i>Daily</span>
+                            </div>
+
+                            <div class="mt-auto d-flex gap-2">
+                                <a href="{% url 'tickets:ticket_book' schedule.id %}" class="btn btn-primary btn-sm flex-grow-1">
+                                    <i class="bi bi-ticket me-1"></i> Book Now
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
+                    <i class="bi bi-bus-front display-5 text-muted"></i>
+                </div>
+                <h4 class="text-muted mb-2">No Bus Schedules Available</h4>
+                <p class="text-muted">Check back later for updated bus schedules.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="tab-pane fade" id="flights" role="tabpanel" aria-labelledby="flights-tab">
+            {% if schedules_by_type.Flight %}
+            <div class="row g-4">
+                {% for schedule in schedules_by_type.Flight %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h6 class="fw-bold text-primary mb-1">{{ schedule.operator_name }}</h6>
+                                    <span class="badge bg-primary small"><i class="bi bi-airplane me-1"></i>Flight</span>
+                                </div>
+                                <div class="text-end">
+                                    <div class="text-muted small">From</div>
+                                    <div class="fw-bold fs-5 text-primary">Rs. {{ schedule.price_per_person }}</div>
+                                    <div class="text-muted small">per person</div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <i class="bi bi-airplane-fill text-primary"></i>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="fw-semibold">{{ schedule.origin }}</div>
+                                                <div class="text-muted small">{{ schedule.departure_time|date:"h:i A" }}</div>
+                                            </div>
+                                            <div class="mx-3 text-center">
+                                                <i class="bi bi-arrow-right text-muted"></i>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="fw-semibold">{{ schedule.destination }}</div>
+                                                <div class="text-muted small">{{ schedule.arrival_time|date:"h:i A"|default:"--:--" }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center text-muted small mb-3">
+                                <span><i class="bi bi-people me-1"></i>{{ schedule.available_seats }} seats left</span>
+                                <span><i class="bi bi-calendar-week me-1"></i>Daily</span>
+                            </div>
+
+                            <div class="mt-auto d-flex gap-2">
+                                <a href="{% url 'tickets:ticket_book' schedule.id %}" class="btn btn-primary btn-sm flex-grow-1">
+                                    <i class="bi bi-ticket me-1"></i> Book Now
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
+                    <i class="bi bi-airplane display-5 text-muted"></i>
+                </div>
+                <h4 class="text-muted mb-2">No Flight Schedules Available</h4>
+                <p class="text-muted">Check back later for updated flight schedules.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

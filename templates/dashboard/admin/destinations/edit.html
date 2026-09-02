@@ -1,0 +1,101 @@
+{% extends 'dashboard/base_admin.html' %}
+{% load static %}
+
+{% block title %}Edit {{ destination.name }} - TravelReady Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Edit Destination</h1>
+        <div class="page-subtitle">Update details for <strong>{{ destination.name }}</strong></div>
+    </div>
+    <a href="{% url 'dashboard:admin_destinations' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Destinations
+    </a>
+</div>
+
+{% if messages %}
+<div class="mb-4">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show border-0 shadow-sm" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="admin-card">
+    <div class="p-4">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label for="name" class="form-label fw-semibold">Destination Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="name" name="name" value="{{ destination.name }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="destination_type" class="form-label fw-semibold">Destination Type <span class="text-danger">*</span></label>
+                    <select class="form-select" id="destination_type" name="destination_type" required>
+                        <option value="INSIDE_COUNTRY" {% if destination.destination_type == 'INSIDE_COUNTRY' %}selected{% endif %}>Inside Country (Nepal)</option>
+                        <option value="OUTSIDE_COUNTRY" {% if destination.destination_type == 'OUTSIDE_COUNTRY' %}selected{% endif %}>Outside Country (International)</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="location" class="form-label fw-semibold">Location / Region</label>
+                    <input type="text" class="form-control" id="location" name="location" value="{{ destination.location|default:'' }}">
+                </div>
+                <div class="col-md-6">
+                    <label for="district" class="form-label fw-semibold">District</label>
+                    <input type="text" class="form-control" id="district" name="district" value="{{ destination.district|default:'' }}">
+                </div>
+                <div class="col-md-6">
+                    <label for="best_season" class="form-label fw-semibold">Best Season</label>
+                    <input type="text" class="form-control" id="best_season" name="best_season" value="{{ destination.best_season|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="base_visit_cost" class="form-label fw-semibold">Base Visit Cost (Rs.) <span class="text-danger">*</span></label>
+                    <input type="number" step="0.01" class="form-control" id="base_visit_cost" name="base_visit_cost" value="{{ destination.base_visit_cost }}" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
+                    <select class="form-select" id="status" name="status" required>
+                        <option value="Active" {% if destination.status == 'Active' %}selected{% endif %}>Active</option>
+                        <option value="Inactive" {% if destination.status == 'Inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label for="main_image" class="form-label fw-semibold">Main Image</label>
+                    {% if destination.main_image %}
+                    <div class="mb-2 d-flex align-items-center gap-3">
+                        <img src="{{ destination.main_image.url }}" alt="Current" class="rounded border shadow-sm" style="height: 70px; object-fit: cover;">
+                        <small class="text-muted">Current image — upload a new file below to replace it</small>
+                    </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="main_image" name="main_image" accept="image/*">
+                </div>
+                <div class="col-12">
+                    <label for="description" class="form-label fw-semibold">Description <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="description" name="description" rows="6" required>{{ destination.description }}</textarea>
+                </div>
+                <div class="col-12">
+                    <label for="rules_regulations" class="form-label fw-semibold">Rules & Regulations</label>
+                    <textarea class="form-control" id="rules_regulations" name="rules_regulations" rows="4">{{ destination.rules_regulations|default:'' }}</textarea>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="d-flex gap-3">
+                <button type="submit" class="btn btn-admin-primary px-5">
+                    <i class="bi bi-save me-2"></i> Save Changes
+                </button>
+                <a href="{% url 'dashboard:admin_destinations' %}" class="btn btn-outline-secondary px-5">
+                    <i class="bi bi-x me-1"></i> Cancel
+                </a>
+                <a href="{% url 'dashboard:admin_destination_delete' destination.pk %}" class="btn btn-outline-danger ms-auto px-4">
+                    <i class="bi bi-trash me-1"></i> Delete Destination
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

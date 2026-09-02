@@ -1,0 +1,678 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}TravelReady - Discover Amazing Places in Nepal & Beyond{% endblock %}
+
+{% block extra_css %}
+<style>
+.hero-section {
+    min-height: 88vh;
+    background: linear-gradient(135deg, #0f172a 0%, #1a1a2e 50%, #16213e 100%);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    padding: 5rem 0;
+}
+.hero-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 20% 80%, rgba(79,70,229,0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(14,165,233,0.2) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(245,158,11,0.08) 0%, transparent 50%);
+    z-index: 0;
+}
+.hero-shape {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.08;
+    z-index: 0;
+}
+.hero-shape-1 { width: 500px; height: 500px; background: #4f46e5; top: -150px; right: -100px; animation: float 8s ease-in-out infinite; }
+.hero-shape-2 { width: 300px; height: 300px; background: #0ea5e9; bottom: -80px; left: 5%; animation: float 10s ease-in-out infinite reverse; }
+.hero-inner { position: relative; z-index: 1; }
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(79,70,229,0.2);
+    border: 1px solid rgba(79,70,229,0.4);
+    color: #a5b4fc;
+    padding: 0.4rem 1rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1.5rem;
+}
+.hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 4rem;
+    font-weight: 800;
+    color: white;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    margin-bottom: 1.5rem;
+}
+.hero-title .accent { background: linear-gradient(135deg, #818cf8, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hero-desc { font-size: 1.1rem; color: rgba(255,255,255,0.7); line-height: 1.8; margin-bottom: 2rem; max-width: 540px; }
+.hero-search-box {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 1.75rem;
+}
+.hero-search-box .form-label { color: rgba(255,255,255,0.7); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.4rem; }
+.hero-search-box .form-control,
+.hero-search-box .form-select {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: white;
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    font-size: 0.9rem;
+}
+.hero-search-box .form-control:focus,
+.hero-search-box .form-select:focus {
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(129,140,248,0.5);
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.15);
+    color: white;
+}
+.hero-search-box .form-control::placeholder { color: rgba(255,255,255,0.4); }
+.hero-search-box .form-select option { color: #1e293b; background: white; }
+.hero-search-btn {
+    background: linear-gradient(135deg, #4f46e5, #3730a3);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.7rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+    width: 100%;
+}
+.hero-search-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.4); color: white; }
+.hero-stats { display: flex; gap: 2rem; margin-top: 2.5rem; flex-wrap: wrap; }
+.hero-stat-item { }
+.hero-stat-num { font-size: 1.8rem; font-weight: 800; color: white; line-height: 1; }
+.hero-stat-lbl { font-size: 0.75rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+/* Destination Cards */
+.dest-card {
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    height: 320px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dest-card img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.5s ease;
+}
+.dest-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+    z-index: 1;
+}
+.dest-card:hover { transform: translateY(-6px); box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
+.dest-card:hover img { transform: scale(1.08); }
+.dest-card-body {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 1.5rem;
+    z-index: 2;
+}
+.dest-card-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    backdrop-filter: blur(8px);
+}
+.dest-card-badge.inside { background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.5); color: #6ee7b7; }
+.dest-card-badge.outside { background: rgba(6,182,212,0.2); border: 1px solid rgba(6,182,212,0.5); color: #67e8f9; }
+.dest-card-title { font-size: 1.25rem; font-weight: 800; color: white; margin-bottom: 0.25rem; }
+.dest-card-loc { font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-bottom: 0.75rem; }
+.dest-card-price { font-size: 0.85rem; color: rgba(255,255,255,0.7); }
+.dest-card-price strong { font-size: 1.1rem; color: #fbbf24; font-weight: 800; }
+.dest-card-placeholder {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Package Cards */
+.pkg-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+.pkg-card:hover { box-shadow: 0 20px 40px rgba(0,0,0,0.1); transform: translateY(-5px); }
+.pkg-card img { height: 200px; width: 100%; object-fit: cover; transition: transform 0.4s; }
+.pkg-card:hover img { transform: scale(1.05); }
+.pkg-card .img-wrapper { overflow: hidden; position: relative; }
+.pkg-card .pkg-badge {
+    position: absolute; top: 12px; left: 12px;
+    background: rgba(79,70,229,0.9);
+    color: white;
+    font-size: 0.7rem; font-weight: 700;
+    padding: 0.3rem 0.7rem;
+    border-radius: 100px;
+    backdrop-filter: blur(4px);
+}
+.pkg-card .pkg-popular {
+    position: absolute; top: 12px; right: 12px;
+    background: rgba(245,158,11,0.9);
+    color: white;
+    font-size: 0.7rem; font-weight: 700;
+    padding: 0.3rem 0.7rem;
+    border-radius: 100px;
+}
+.pkg-card .pkg-body { padding: 1.25rem; }
+.pkg-card .pkg-dest { font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.4rem; }
+.pkg-card .pkg-title { font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; line-height: 1.4; }
+.pkg-card .pkg-info { display: flex; gap: 1rem; margin-bottom: 0.75rem; }
+.pkg-card .pkg-info span { font-size: 0.78rem; color: #64748b; display: flex; align-items: center; gap: 0.25rem; }
+.pkg-card .pkg-price { font-size: 1.3rem; font-weight: 800; color: #4f46e5; }
+.pkg-card .pkg-price small { font-size: 0.75rem; font-weight: 400; color: #94a3b8; }
+
+/* Features */
+.feature-icon-box {
+    width: 64px; height: 64px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1.25rem;
+    transition: all 0.3s;
+}
+.feature-item { padding: 2rem; border-radius: 16px; transition: all 0.3s; }
+.feature-item:hover { background: white; box-shadow: 0 20px 40px rgba(0,0,0,0.08); transform: translateY(-4px); }
+
+/* Testimonial */
+.testimonial-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 2rem;
+    transition: all 0.3s;
+    height: 100%;
+}
+.testimonial-card:hover { box-shadow: 0 20px 40px rgba(0,0,0,0.1); transform: translateY(-4px); }
+.star-rating { color: #f59e0b; letter-spacing: 2px; }
+.testimonial-avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1rem; color: white;
+}
+
+/* How it works */
+.how-step {
+    text-align: center;
+    padding: 2rem 1rem;
+    position: relative;
+}
+.step-number {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    margin: 0 auto 1.25rem;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    transition: all 0.3s;
+}
+.how-step:hover .step-number { transform: scale(1.1) rotate(-5deg); }
+
+/* CTA Section */
+.cta-section {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #0ea5e9 100%);
+    border-radius: 24px;
+    padding: 4rem 3rem;
+    position: relative;
+    overflow: hidden;
+}
+.cta-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+@media (max-width: 768px) {
+    .hero-title { font-size: 2.4rem; }
+    .hero-stats { gap: 1.25rem; }
+    .cta-section { padding: 2.5rem 1.5rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-shape hero-shape-1"></div>
+    <div class="hero-shape hero-shape-2"></div>
+    <div class="container hero-inner">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <div class="hero-badge animate-fadeInUp">
+                    <i class="bi bi-star-fill"></i> #1 Travel Platform in Nepal
+                </div>
+                <h1 class="hero-title animate-fadeInUp delay-1">
+                    Discover Your <span class="accent">Dream</span><br>
+                    Destination
+                </h1>
+                <p class="hero-desc animate-fadeInUp delay-2">
+                    From majestic Himalayan treks to exotic international getaways — plan, book, and experience it all seamlessly with TravelReady.
+                </p>
+                <div class="d-flex flex-wrap gap-3 animate-fadeInUp delay-3">
+                    <a href="{% url 'destinations:destination_list' %}" class="tr-btn tr-btn-primary tr-btn-lg">
+                        <i class="bi bi-compass"></i> Explore Destinations
+                    </a>
+                    <a href="{% url 'custom_trips:builder' %}" class="btn btn-lg" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.25); border-radius: 10px; padding: 0.75rem 1.75rem; font-weight: 600; transition: all 0.3s;">
+                        <i class="bi bi-magic me-2"></i>Build Custom Trip
+                    </a>
+                </div>
+                <div class="hero-stats animate-fadeInUp delay-4">
+                    <div class="hero-stat-item">
+                        <div class="hero-stat-num">500+</div>
+                        <div class="hero-stat-lbl">Destinations</div>
+                    </div>
+                    <div style="width:1px; background: rgba(255,255,255,0.15); align-self: stretch;"></div>
+                    <div class="hero-stat-item">
+                        <div class="hero-stat-num">10K+</div>
+                        <div class="hero-stat-lbl">Happy Travelers</div>
+                    </div>
+                    <div style="width:1px; background: rgba(255,255,255,0.15); align-self: stretch;"></div>
+                    <div class="hero-stat-item">
+                        <div class="hero-stat-num">4.9★</div>
+                        <div class="hero-stat-lbl">Average Rating</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 animate-fadeInUp delay-2">
+                <div class="hero-search-box">
+                    <h5 class="fw-bold mb-1" style="color: white; font-size: 1.1rem;">Find Your Perfect Trip</h5>
+                    <p style="color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-bottom: 1.25rem;">Search from our curated selection of destinations and packages</p>
+                    <form hx-post="{% url 'destinations:search_destinations_htmx' %}" hx-target="#search-results" hx-trigger="submit">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Where to?</label>
+                                <div style="position:relative;">
+                                    <i class="bi bi-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.4);z-index:1;"></i>
+                                    <input type="text" class="form-control" list="destinations-list" placeholder="Search destinations..." name="destination" autocomplete="off" style="padding-left: 2.5rem;">
+                                    <datalist id="destinations-list">
+                                        {% for d in inside_country %}<option value="{{ d.name }}"></option>{% endfor %}
+                                        {% for d in outside_country %}<option value="{{ d.name }}"></option>{% endfor %}
+                                        <option value="Kathmandu, Nepal"></option>
+                                        <option value="Pokhara, Nepal"></option>
+                                        <option value="Chitwan, Nepal"></option>
+                                        <option value="Bali, Indonesia"></option>
+                                        <option value="Dubai, UAE"></option>
+                                    </datalist>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Travel Date</label>
+                                <input type="date" class="form-control" name="travel_date">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Travelers</label>
+                                <select class="form-select" name="adults">
+                                    <option value="1">1 Adult</option>
+                                    <option value="2" selected>2 Adults</option>
+                                    <option value="3">3 Adults</option>
+                                    <option value="4">4+ Adults</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="hero-search-btn btn">
+                                    <i class="bi bi-search me-2"></i>Search Destinations
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="search-results" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Inside Country Destinations -->
+<section class="tr-section" style="background: var(--tr-gray-50);">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-3">
+            <div>
+                <span class="tr-section-badge"><i class="bi bi-geo-alt"></i> Nepal Destinations</span>
+                <h2 class="tr-section-title mb-2">Explore Inside Nepal</h2>
+                <p class="tr-section-subtitle">Discover hidden gems and iconic spots right here in Nepal</p>
+            </div>
+            <a href="{% url 'destinations:destination_list' %}?type=INSIDE_COUNTRY" class="tr-btn tr-btn-secondary">
+                View All <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <div class="row g-4">
+            {% for d in inside_country %}
+            <div class="col-lg-4 col-md-6 animate-on-scroll delay-{{ forloop.counter }}">
+                <a href="{% url 'destinations:destination_detail' d.slug %}" class="text-decoration-none d-block dest-card">
+                    {% if d.main_image %}
+                        <img src="{{ d.main_image.url }}" alt="{{ d.name }}" loading="lazy">
+                    {% else %}
+                        <div class="dest-card-placeholder">
+                            <i class="bi bi-image" style="font-size:3rem; color: rgba(255,255,255,0.15);"></i>
+                        </div>
+                    {% endif %}
+                    <div class="dest-card-body">
+                        <span class="dest-card-badge inside">Inside Nepal</span>
+                        <div class="dest-card-title">{{ d.name }}</div>
+                        <div class="dest-card-loc"><i class="bi bi-geo-alt me-1"></i>{{ d.location }}{% if d.district %}, {{ d.district }}{% endif %}</div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="dest-card-price">Starting from <strong>Rs. {{ d.base_visit_cost|default:"12,000" }}</strong></div>
+                            <span style="background:rgba(255,255,255,0.15);color:white;padding:0.35rem 0.85rem;border-radius:100px;font-size:0.78rem;font-weight:600;backdrop-filter:blur(4px);">
+                                Explore <i class="bi bi-arrow-right ms-1"></i>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="tr-empty-state">
+                    <div class="empty-icon"><i class="bi bi-geo-alt"></i></div>
+                    <h4>No Destinations Yet</h4>
+                    <p>We're adding amazing destinations. Check back soon!</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Featured Packages -->
+{% if featured_packages %}
+<section class="tr-section">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-3">
+            <div>
+                <span class="tr-section-badge"><i class="bi bi-box-seam"></i> Curated Packages</span>
+                <h2 class="tr-section-title mb-2">Popular Travel Packages</h2>
+                <p class="tr-section-subtitle">Pre-planned packages for a hassle-free experience</p>
+            </div>
+            <a href="{% url 'packages:package_list' %}" class="tr-btn tr-btn-secondary">
+                View All <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="row g-4">
+            {% for pkg in featured_packages %}
+            <div class="col-lg-4 col-md-6 animate-on-scroll">
+                <div class="pkg-card">
+                    <div class="img-wrapper">
+                        {% if pkg.thumbnail %}
+                            <img src="{{ pkg.thumbnail.url }}" alt="{{ pkg.title }}" loading="lazy">
+                        {% else %}
+                            <div style="height:200px;background:linear-gradient(135deg,#e0e7ff,#f0f9ff);display:flex;align-items:center;justify-content:center;">
+                                <i class="bi bi-image" style="font-size:2.5rem;color:#94a3b8;"></i>
+                            </div>
+                        {% endif %}
+                        <span class="pkg-badge">{{ pkg.get_package_type_display|default:"Package" }}</span>
+                        {% if pkg.is_popular %}<span class="pkg-popular"><i class="bi bi-fire me-1"></i>Popular</span>{% endif %}
+                    </div>
+                    <div class="pkg-body">
+                        {% if pkg.destination %}<div class="pkg-dest"><i class="bi bi-geo-alt me-1"></i>{{ pkg.destination.name }}</div>{% endif %}
+                        <div class="pkg-title">{{ pkg.title }}</div>
+                        <div class="pkg-info">
+                            <span><i class="bi bi-clock"></i> {{ pkg.base_days }} Days</span>
+                            <span><i class="bi bi-building"></i> Hotel Incl.</span>
+                            <span><i class="bi bi-check-circle"></i> Activities</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="pkg-price">Rs. {{ pkg.base_price }}<small>/person</small></div>
+                            <a href="{% url 'packages:package_detail' pkg.slug %}" class="tr-btn tr-btn-primary tr-btn-sm">Book Now</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Outside Country -->
+<section class="tr-section" style="background: var(--tr-gray-50);">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-3">
+            <div>
+                <span class="tr-section-badge" style="background:#ecfeff;color:#0891b2;"><i class="bi bi-globe2"></i> International</span>
+                <h2 class="tr-section-title mb-2">International Destinations</h2>
+                <p class="tr-section-subtitle">Explore incredible places around the world</p>
+            </div>
+            <a href="{% url 'destinations:destination_list' %}?type=OUTSIDE_COUNTRY" class="tr-btn tr-btn-secondary">
+                View All <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="row g-4">
+            {% for d in outside_country %}
+            <div class="col-lg-3 col-md-6 animate-on-scroll">
+                <a href="{% url 'destinations:destination_detail' d.slug %}" class="text-decoration-none d-block dest-card" style="height:280px;">
+                    {% if d.main_image %}
+                        <img src="{{ d.main_image.url }}" alt="{{ d.name }}" loading="lazy">
+                    {% else %}
+                        <div class="dest-card-placeholder"></div>
+                    {% endif %}
+                    <div class="dest-card-body">
+                        <span class="dest-card-badge outside">International</span>
+                        <div class="dest-card-title">{{ d.name }}</div>
+                        <div class="dest-card-loc"><i class="bi bi-globe me-1"></i>{{ d.location }}</div>
+                        <div class="dest-card-price">From <strong>Rs. {{ d.base_visit_cost|default:"85,000" }}</strong></div>
+                    </div>
+                </a>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="tr-empty-state">
+                    <div class="empty-icon"><i class="bi bi-globe2"></i></div>
+                    <h4>International Packages Coming Soon</h4>
+                    <p>We're curating amazing international destinations for you!</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Why Choose Us -->
+<section class="tr-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="tr-section-badge"><i class="bi bi-stars"></i> Why TravelReady</span>
+            <h2 class="tr-section-title">Everything You Need to Travel</h2>
+            <p class="tr-section-subtitle mx-auto">We take care of every detail so you can focus on enjoying your journey</p>
+        </div>
+        <div class="row g-4">
+            {% for feat in features %}{% empty %}
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-item text-center animate-on-scroll">
+                    <div class="feature-icon-box mx-auto" style="background:#eef2ff;">
+                        <i class="bi bi-shield-check" style="color:#4f46e5;"></i>
+                    </div>
+                    <h5 class="fw-700 mb-2">Verified Bookings</h5>
+                    <p class="text-muted" style="font-size:0.9rem;">Every booking is confirmed and verified for a stress-free experience.</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-item text-center animate-on-scroll delay-1">
+                    <div class="feature-icon-box mx-auto" style="background:#ecfdf5;">
+                        <i class="bi bi-wallet2" style="color:#059669;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Best Prices</h5>
+                    <p class="text-muted" style="font-size:0.9rem;">Competitive prices with transparent breakdown — no hidden fees.</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-item text-center animate-on-scroll delay-2">
+                    <div class="feature-icon-box mx-auto" style="background:#fffbeb;">
+                        <i class="bi bi-headset" style="color:#d97706;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">24/7 Support</h5>
+                    <p class="text-muted" style="font-size:0.9rem;">Our travel experts are available around the clock to assist you.</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-item text-center animate-on-scroll delay-3">
+                    <div class="feature-icon-box mx-auto" style="background:#ecfeff;">
+                        <i class="bi bi-compass" style="color:#0891b2;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Custom Itineraries</h5>
+                    <p class="text-muted" style="font-size:0.9rem;">Build personalized trips tailored to your preferences and budget.</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- CTA - Custom Trip -->
+<section class="tr-section py-4">
+    <div class="container">
+        <div class="cta-section position-relative text-center">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div style="font-size:3rem;margin-bottom:1rem;">✈️</div>
+                    <h2 style="font-family:'Playfair Display',serif;font-size:2.5rem;color:white;font-weight:800;margin-bottom:1rem;">Want a Personalized Trip?</h2>
+                    <p style="color:rgba(255,255,255,0.8);font-size:1.1rem;line-height:1.7;margin-bottom:2rem;max-width:520px;margin-left:auto;margin-right:auto;">
+                        Our travel experts will craft your perfect itinerary — from destination to hotel to activities, tailored just for you.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3 justify-content-center">
+                        <a href="{% url 'custom_trips:builder' %}" class="btn btn-lg" style="background:white;color:#4f46e5;font-weight:700;border-radius:10px;padding:0.85rem 2rem;">
+                            <i class="bi bi-magic me-2"></i>Build My Trip
+                        </a>
+                        <a href="{% url 'custom_trips:quotation_request' %}" class="btn btn-lg" style="background:rgba(255,255,255,0.15);color:white;border:1.5px solid rgba(255,255,255,0.3);font-weight:600;border-radius:10px;padding:0.85rem 2rem;">
+                            <i class="bi bi-envelope me-2"></i>Request a Quote
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="tr-section" style="background: var(--tr-gray-50);">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="tr-section-badge" style="background:#fffbeb;color:#d97706;"><i class="bi bi-chat-quote"></i> Testimonials</span>
+            <h2 class="tr-section-title">What Our Travelers Say</h2>
+            <p class="tr-section-subtitle mx-auto">Real stories from real travelers who trusted TravelReady</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6 animate-on-scroll">
+                <div class="testimonial-card">
+                    <div class="star-rating mb-3">★★★★★</div>
+                    <p class="mb-4" style="color:#475569;font-style:italic;line-height:1.7;">"TravelReady organized an amazing Pokhara trip for my family. Everything was perfectly planned from hotels to activities. Highly recommended!"</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="testimonial-avatar" style="background:linear-gradient(135deg,#4f46e5,#818cf8);">AS</div>
+                        <div>
+                            <div class="fw-bold" style="font-size:0.9rem;">Anita Sharma</div>
+                            <div style="font-size:0.78rem;color:#94a3b8;">Pokhara Family Trip</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 animate-on-scroll delay-1">
+                <div class="testimonial-card">
+                    <div class="star-rating mb-3">★★★★★</div>
+                    <p class="mb-4" style="color:#475569;font-style:italic;line-height:1.7;">"The Bali package was incredible! Best price, great hotels, and wonderful local guides. Will definitely book with TravelReady again."</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="testimonial-avatar" style="background:linear-gradient(135deg,#059669,#34d399);">RK</div>
+                        <div>
+                            <div class="fw-bold" style="font-size:0.9rem;">Rajesh Karki</div>
+                            <div style="font-size:0.78rem;color:#94a3b8;">Bali Honeymoon Package</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 animate-on-scroll delay-2">
+                <div class="testimonial-card">
+                    <div class="star-rating mb-3">★★★★☆</div>
+                    <p class="mb-4" style="color:#475569;font-style:italic;line-height:1.7;">"Chitwan safari exceeded all expectations! The custom trip builder was so easy to use. Customer support was fantastic throughout."</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="testimonial-avatar" style="background:linear-gradient(135deg,#0891b2,#38bdf8);">SP</div>
+                        <div>
+                            <div class="fw-bold" style="font-size:0.9rem;">Suman Poudel</div>
+                            <div style="font-size:0.78rem;color:#94a3b8;">Chitwan Adventure</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="tr-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="tr-section-badge"><i class="bi bi-list-check"></i> Simple Process</span>
+            <h2 class="tr-section-title">How It Works</h2>
+            <p class="tr-section-subtitle mx-auto">Plan your perfect trip in just 4 simple steps</p>
+        </div>
+        <div class="row g-4 position-relative">
+            <div class="col-lg-3 col-md-6">
+                <div class="how-step animate-on-scroll">
+                    <div class="step-number" style="background:linear-gradient(135deg,#4f46e5,#818cf8);color:white;">
+                        <i class="bi bi-search fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">1. Choose Destination</h5>
+                    <p class="text-muted" style="font-size:0.9rem;">Browse our curated destinations and find your perfect travel match.</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="how-step animate-on-scroll delay-1">
+                    <div class="step-number" style="background:linear-gradient(135deg,#059669,#34d399);color:white;">
+                        <i class="bi bi-sliders fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">2. Customize Trip</h5>
+                    <p class="text-muted" style="font-size:0.9rem;">Add hotels, activities, and flights to build your perfect itinerary.</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="how-step animate-on-scroll delay-2">
+                    <div class="step-number" style="background:linear-gradient(135deg,#d97706,#fbbf24);color:white;">
+                        <i class="bi bi-shield-check fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">3. Secure Payment</h5>
+                    <p class="text-muted" style="font-size:0.9rem;">Complete booking via multiple secure payment options.</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="how-step animate-on-scroll delay-3">
+                    <div class="step-number" style="background:linear-gradient(135deg,#0891b2,#38bdf8);color:white;">
+                        <i class="bi bi-airplane-fill fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">4. Enjoy Travel</h5>
+                    <p class="text-muted" style="font-size:0.9rem;">Receive e-tickets & documents, and enjoy your unforgettable adventure.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

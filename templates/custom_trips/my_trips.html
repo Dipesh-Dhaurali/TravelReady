@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}My Custom Trips - TravelReady{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-suitcase-lg text-primary"></i> My Custom Trips</h2>
+        <a href="{% url 'custom_trips:builder' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Build New Trip
+        </a>
+    </div>
+
+    {% if trips %}
+        <div class="row g-4">
+            {% for trip in trips %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 text-truncate">{{ trip.trip_name }}</h5>
+                            {% if trip.status == 'DRAFT' %}
+                                <span class="badge bg-secondary">{{ trip.get_status_display }}</span>
+                            {% elif trip.status == 'SAVED' %}
+                                <span class="badge bg-info">{{ trip.get_status_display }}</span>
+                            {% else %}
+                                <span class="badge bg-success">{{ trip.get_status_display }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush mb-3">
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted"><i class="bi bi-calendar3"></i> Total Days</span>
+                                    <strong>{{ trip.total_days }} days</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted"><i class="bi bi-building"></i> Hotel</span>
+                                    <strong>{{ trip.get_selected_hotel_category_display }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted"><i class="bi bi-people"></i> Travelers</span>
+                                    <strong>{{ trip.adults }}A, {{ trip.children }}C, {{ trip.infants }}I</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted"><i class="bi bi-geo-alt"></i> Destinations</span>
+                                    <strong>{{ trip.trip_destinations.count }}</strong>
+                                </li>
+                            </ul>
+                            <div class="d-grid gap-2">
+                                <div class="text-center bg-light rounded py-2 mb-2">
+                                    <span class="text-muted small">Estimated Price</span>
+                                    <div class="fw-bold fs-5 text-primary">Rs. {{ trip.total_calculated_price }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex gap-2">
+                            <a href="{% url 'custom_trips:trip_detail' trip.pk %}" class="btn btn-outline-primary flex-fill">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                            {% if trip.status != 'CONVERTED' %}
+                                <a href="{% url 'bookings:checkout' %}?trip={{ trip.pk }}" class="btn btn-success flex-fill">
+                                    <i class="bi bi-cart-check"></i> Book
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-suitcase-lg display-1 text-muted"></i>
+            </div>
+            <h4 class="text-muted mb-3">No Custom Trips Yet</h4>
+            <p class="text-muted mb-4">Start building your dream trip with our trip builder!</p>
+            <a href="{% url 'custom_trips:builder' %}" class="btn btn-primary btn-lg">
+                <i class="bi bi-rocket-takeoff"></i> Build My First Trip
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
