@@ -12,6 +12,7 @@ from apps.destinations.models import (
     Activity,
     Transportation,
 )
+
 from .models import (
     CustomTrip,
     CustomTripDestination,
