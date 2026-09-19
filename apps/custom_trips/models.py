@@ -3,6 +3,12 @@ from django.contrib.auth.models import User
 
 
 class CustomTrip(models.Model):
+    PACKAGE_TYPE_CHOICES = [
+        ('SINGLE', 'Single'),
+        ('COUPLE', 'Couple'),
+        ('FAMILY', 'Family'),
+    ]
+
     HOTEL_CATEGORY_CHOICES = [
         ('BUDGET', 'Budget'),
         ('THREE_STAR', '3 Star'),
@@ -23,10 +29,17 @@ class CustomTrip(models.Model):
         related_name='custom_trips',
     )
     total_days = models.IntegerField(default=0)
+    package_type = models.CharField(
+        max_length=15,
+        choices=PACKAGE_TYPE_CHOICES,
+        blank=True,
+        null=True,
+    )
     selected_hotel_category = models.CharField(
         max_length=15,
         choices=HOTEL_CATEGORY_CHOICES,
-        default='BUDGET',
+        blank=True,
+        null=True,
     )
     adults = models.IntegerField(default=1)
     children = models.IntegerField(default=0)

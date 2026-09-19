@@ -13,6 +13,11 @@ urlpatterns = [
         name='calculate_price_htmx',
     ),
     path(
+        '<slug:slug>/book/',
+        views.book_destination_redirect,
+        name='book_destination',
+    ),
+    path(
         '<slug:slug>/wishlist/add/',
         views.add_to_wishlist,
         name='add_to_wishlist',

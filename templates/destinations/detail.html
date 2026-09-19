@@ -258,12 +258,15 @@
 
         <div class="col-lg-4">
             <div class="price-calculator">
-                <div id="priceForm"
-                     hx-post="{% url 'destinations:calculate_price_htmx' destination.slug %}"
-                     hx-trigger="change from:#priceForm, submit"
-                     hx-target="#price-breakdown"
-                     hx-include="#priceForm"
-                     hx-swap="innerHTML">
+                <form id="priceForm"
+                      method="POST"
+                      action="{% url 'destinations:book_destination' destination.slug %}"
+                      hx-post="{% url 'destinations:calculate_price_htmx' destination.slug %}"
+                      hx-trigger="change from:#priceForm, change from:[form='priceForm']"
+                      hx-target="#price-breakdown"
+                      hx-include="#priceForm, [form='priceForm']"
+                      hx-swap="innerHTML">
+                    {% csrf_token %}
                     <div class="card border-0 shadow">
                         <div class="card-header bg-primary text-white">
                             <h4 class="card-title mb-0"><i class="bi bi-calculator me-2"></i>Price Calculator</h4>
@@ -273,15 +276,15 @@
                                 <label class="form-label fw-semibold">Package Type</label>
                                 <div class="d-flex flex-column gap-2">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="package_type" id="pt_single" value="SINGLE" checked form="priceForm">
+                                        <input class="form-check-input" type="radio" name="package_type" id="pt_single" value="SINGLE" checked>
                                         <label class="form-check-label" for="pt_single">Single Person</label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="package_type" id="pt_couple" value="COUPLE" form="priceForm">
+                                        <input class="form-check-input" type="radio" name="package_type" id="pt_couple" value="COUPLE">
                                         <label class="form-check-label" for="pt_couple">Couple</label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="package_type" id="pt_family" value="FAMILY" form="priceForm">
+                                        <input class="form-check-input" type="radio" name="package_type" id="pt_family" value="FAMILY">
                                         <label class="form-check-label" for="pt_family">Family</label>
                                     </div>
                                 </div>
@@ -291,7 +294,7 @@
                                 <label for="num_days" class="form-label fw-semibold">Number of Days</label>
                                 <div class="input-group">
                                     <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('num_days').stepDown()">-</button>
-                                    <input type="number" id="num_days" name="num_days" class="form-control text-center" value="3" min="1" max="30" form="priceForm">
+                                    <input type="number" id="num_days" name="num_days" class="form-control text-center" value="3" min="1" max="30">
                                     <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('num_days').stepUp()">+</button>
                                 </div>
                             </div>
@@ -299,17 +302,17 @@
                             <div class="row mb-3">
                                 <div class="col-6">
                                     <label for="adults" class="form-label fw-semibold">Adults</label>
-                                    <input type="number" id="adults" name="adults" class="form-control" value="2" min="1" max="10" form="priceForm">
+                                    <input type="number" id="adults" name="adults" class="form-control" value="2" min="1" max="10">
                                 </div>
                                 <div class="col-6">
                                     <label for="children" class="form-label fw-semibold">Children</label>
-                                    <input type="number" id="children" name="children" class="form-control" value="0" min="0" max="10" form="priceForm">
+                                    <input type="number" id="children" name="children" class="form-control" value="0" min="0" max="10">
                                 </div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="hotel_category" class="form-label fw-semibold">Hotel Category</label>
-                                <select id="hotel_category" name="hotel_category" class="form-select" form="priceForm">
+                                <select id="hotel_category" name="hotel_category" class="form-select">
                                     <option value="">-- No Hotel --</option>
                                     <option value="BUDGET">Budget</option>
                                     <option value="THREE_STAR">3 Star</option>
@@ -322,25 +325,38 @@
                                 <div class="card border-0 bg-light">
                                     <div class="card-body">
                                         <h5 class="card-title">Price Breakdown</h5>
-                                        <p class="text-muted small mb-0">Select options above to see detailed estimate.</p>
-                                        <h4 class="text-primary mt-2">Estimated Total: Rs. {{ destination.base_visit_cost }}</h4>
+                                        Base Package: Rs. {{ base_price|floatformat:2 }}<br>
+                                        Extra Days: Rs. {{ extra_days_price|floatformat:2 }}<br>
+                                        Activities ({{ adults }} adults x Rs. {{ activity_adult_total|floatformat:2 }} + {{ children }} children x Rs. {{ activity_child_total|floatformat:2 }}): Rs. {{ activities_total|floatformat:2 }}<br>
+                                        Transport: Rs. {{ transport_total|floatformat:2 }}<br>
+                                        Hotel: Rs. {{ hotel_total|floatformat:2 }}<br>
+                                        <hr>
+                                        Subtotal: Rs. {{ subtotal|floatformat:2 }}<br>
+                                        Service Charge (10%): Rs. {{ service_charge|floatformat:2 }}<br>
+                                        VAT (13%): Rs. {{ vat|floatformat:2 }}<br>
+                                        <hr>
+                                        <h4 class="text-primary">Estimated Total: Rs. {{ grand_total|floatformat:2 }}</h4>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="d-grid gap-2">
-                                <button type="submit" form="priceForm" class="btn btn-primary btn-lg">
+                                <button type="submit" class="btn btn-primary btn-lg">
                                     <i class="bi bi-calendar-check me-2"></i>Book Now
                                 </button>
                                 {% if user.is_authenticated %}
                                 <a href="{% url 'destinations:add_to_wishlist' destination.slug %}" class="btn btn-outline-secondary">
                                     <i class="bi bi-heart me-2"></i>Add to Wishlist
                                 </a>
+                                {% else %}
+                                <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-heart me-2"></i>Add to Wishlist
+                                </a>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>

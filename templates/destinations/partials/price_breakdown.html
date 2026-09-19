@@ -1,14 +1,16 @@
 <div class="card border-0 bg-light">
     <div class="card-body">
         <h5 class="card-title">Price Breakdown</h5>
-        Base Package: Rs. {{ base_price }}<br>
-        Extra Days: Rs. {{ extra_days_price }}<br>
-        Activities ({{ adults }} adults x Rs. {{ activity_adult_total }} + {{ children }} children x Rs. {{ activity_child_total }}): Rs. {{ activities_total }}<br>
-        Transport: Rs. {{ transport_total }}<br>
-        Hotel: Rs. {{ hotel_total }}<br>
-        Service Charge (10%): Rs. {{ service_charge }}<br>
-        VAT (13%): Rs. {{ vat }}<br>
+        Base Package: Rs. {{ base_price|floatformat:2 }}<br>
+        Extra Days: Rs. {{ extra_days_price|floatformat:2 }}<br>
+        Activities ({{ adults }} adults x Rs. {{ activity_adult_total|floatformat:2 }} + {{ children }} children x Rs. {{ activity_child_total|floatformat:2 }}): Rs. {{ activities_total|floatformat:2 }}<br>
+        Transport: Rs. {{ transport_total|floatformat:2 }}<br>
+        Hotel: Rs. {{ hotel_total|floatformat:2 }}<br>
         <hr>
-        <h4 class="text-primary">Estimated Total: Rs. {{ grand_total }}</h4>
+        Subtotal: Rs. {{ subtotal|floatformat:2 }}<br>
+        Service Charge (10%): Rs. {{ service_charge|floatformat:2 }}<br>
+        VAT (13%): Rs. {{ vat|floatformat:2 }}<br>
+        <hr>
+        <h4 class="text-primary">Estimated Total: Rs. {{ grand_total|floatformat:2 }}</h4>
     </div>
 </div>

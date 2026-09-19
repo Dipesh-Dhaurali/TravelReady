@@ -101,26 +101,28 @@
     <div class="row g-5">
         <div class="col-lg-8">
             {% if package or custom_trip %}
-            <div class="trip-banner mb-4" style="background-image: url('{% if package and package.thumbnail %}{{ package.thumbnail.url }}{% else %}{% static 'images/placeholder.jpg' %}{% endif %}'); background-color: #6c757d;">
+            <div class="trip-banner mb-4" style="background-image: url('{% if package and package.thumbnail %}{{ package.thumbnail.url }}{% elif custom_trip and custom_trip.trip_destinations.all and custom_trip.trip_destinations.all.0.destination.main_image %}{{ custom_trip.trip_destinations.all.0.destination.main_image.url }}{% else %}{% static 'images/placeholder.jpg' %}{% endif %}'); background-color: #6c757d;">
                 <div class="trip-banner-content">
                     <h2 class="h4 fw-bold mb-1">
                         {% if package %}
                             {{ package.title }}
                         {% elif custom_trip %}
-                            {{ custom_trip.title|default:"Custom Trip" }}
+                            {{ custom_trip.trip_name|default:"Custom Trip" }}
                         {% endif %}
                     </h2>
                     <p class="mb-0 small opacity-90">
                         <i class="bi bi-geo-alt-fill me-1"></i>
                         {% if package and package.destination %}
                             {{ package.destination.name }}
-                        {% elif custom_trip and custom_trip.destination %}
-                            {{ custom_trip.destination }}
+                        {% elif custom_trip and custom_trip.trip_destinations.all %}
+                            {% for td in custom_trip.trip_destinations.all %}{{ td.destination.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
                         {% else %}
                             Custom Destination
                         {% endif %}
                         {% if package %}
                             &nbsp;·&nbsp;<i class="bi bi-calendar3 me-1"></i>{{ package.base_days }} Days
+                        {% elif custom_trip and custom_trip.total_days %}
+                            &nbsp;·&nbsp;<i class="bi bi-calendar3 me-1"></i>{{ custom_trip.total_days }} Days
                         {% endif %}
                     </p>
                 </div>
@@ -322,17 +324,54 @@
                         {% if package or custom_trip %}
                         <div class="mb-3 pb-3 border-bottom">
                             <h6 class="fw-bold mb-1">
-                                {% if package %}{{ package.title }}{% elif custom_trip %}{{ custom_trip.title|default:"Custom Trip" }}{% endif %}
+                                {% if package %}{{ package.title }}{% elif custom_trip %}{{ custom_trip.trip_name|default:"Custom Trip" }}{% endif %}
                             </h6>
                             <div class="text-muted small">
                                 {% if package and package.destination %}
                                     <i class="bi bi-geo-alt me-1"></i>{{ package.destination.name }}
+                                {% elif custom_trip and custom_trip.trip_destinations.all %}
+                                    <i class="bi bi-geo-alt me-1"></i>{% for td in custom_trip.trip_destinations.all %}{{ td.destination.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
                                 {% endif %}
                             </div>
                         </div>
                         {% endif %}
 
                         <div id="costBreakdown">
+                            {% if custom_trip %}
+                            <div class="cost-row">
+                                <span class="text-muted">Base Package</span>
+                                <strong>Rs. {{ base_price|default:0|floatformat:2 }}</strong>
+                            </div>
+                            <div class="cost-row">
+                                <span class="text-muted">Extra Days</span>
+                                <strong>Rs. {{ extra_days_price|default:0|floatformat:2 }}</strong>
+                            </div>
+                            <div class="cost-row">
+                                <span class="text-muted">Activities<br><small>({{ custom_trip.adults|default:1 }} adults × Rs. {{ activity_adult_total|default:0|floatformat:2 }} + {{ custom_trip.children|default:0 }} children × Rs. {{ activity_child_total|default:0|floatformat:2 }})</small></span>
+                                <strong>Rs. {{ activities_total|default:0|floatformat:2 }}</strong>
+                            </div>
+                            <div class="cost-row">
+                                <span class="text-muted">Transport</span>
+                                <strong>Rs. {{ transport_total|default:0|floatformat:2 }}</strong>
+                            </div>
+                            <div class="cost-row">
+                                <span class="text-muted">Hotel</span>
+                                <strong>Rs. {{ hotel_total|default:0|floatformat:2 }}</strong>
+                            </div>
+                            <hr class="my-2">
+                            <div class="cost-row">
+                                <span class="text-muted">Subtotal</span>
+                                <strong>Rs. {{ subtotal|default:0|floatformat:2 }}</strong>
+                            </div>
+                            <div class="cost-row">
+                                <span class="text-muted">Service Charge (10%)</span>
+                                <strong>Rs. {{ service_charge|default:0|floatformat:2 }}</strong>
+                            </div>
+                            <div class="cost-row">
+                                <span class="text-muted">VAT (13%)</span>
+                                <strong>Rs. {{ vat|default:0|floatformat:2 }}</strong>
+                            </div>
+                            {% else %}
                             <div class="cost-row">
                                 <span class="text-muted">
                                     Base Price
@@ -365,23 +404,40 @@
                                 <span class="text-muted">Infants <span class="badge bg-secondary" id="infantsBadge">0</span> × 10%</span>
                                 <strong id="infantsCost">Rs. 0</strong>
                             </div>
+                            {% endif %}
                         </div>
 
                         <hr class="my-3">
 
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <span class="h5 fw-bold mb-0">Total Cost</span>
+                            {% if custom_trip %}
+                            <span class="h4 fw-bold text-primary mb-0" id="totalCost">Rs. {{ grand_total|default:0|floatformat:2 }}</span>
+                            {% else %}
                             <span class="h4 fw-bold text-primary mb-0" id="totalCost">Rs. 0</span>
+                            {% endif %}
                         </div>
 
                         <div class="bg-light p-3 rounded mb-3">
                             <div class="d-flex justify-content-between mb-2">
                                 <span class="text-muted">Due Today (30%):</span>
-                                <strong id="partialAmount">Rs. 0</strong>
+                                <strong id="partialAmount">
+                                    {% if custom_trip %}
+                                    Rs. {{ partial_amount|default:0|floatformat:2 }}
+                                    {% else %}
+                                    Rs. 0
+                                    {% endif %}
+                                </strong>
                             </div>
                             <div class="d-flex justify-content-between">
                                 <span class="text-muted">Balance Later:</span>
-                                <strong id="balanceAmount">Rs. 0</strong>
+                                <strong id="balanceAmount">
+                                    {% if custom_trip %}
+                                    Rs. {{ balance_amount|default:0|floatformat:2 }}
+                                    {% else %}
+                                    Rs. 0
+                                    {% endif %}
+                                </strong>
                             </div>
                         </div>
 
@@ -416,11 +472,12 @@
 
 {% block extra_js %}
 <script>
+    const isCustomTrip = {% if custom_trip %}true{% else %}false{% endif %};
     const basePrice = parseFloat(
         {% if package %}
             {{ package.base_price|default:0 }}
         {% elif custom_trip %}
-            {{ custom_trip.total_calculated_price|default:0 }}
+            {{ grand_total|default:0 }}
         {% elif quotation %}
             {{ quotation.admin_quoted_price|default:quotation.budget|default:0 }}
         {% else %}
@@ -433,6 +490,26 @@
     }
 
     function updateCosts() {
+        if (isCustomTrip) {
+            const totalCost = basePrice;
+            const partialAmount = totalCost * 0.3;
+            const balanceAmount = totalCost - partialAmount;
+            document.getElementById('totalCost').textContent = formatCurrency(totalCost);
+            document.getElementById('partialAmount').textContent = formatCurrency(partialAmount);
+            document.getElementById('balanceAmount').textContent = formatCurrency(balanceAmount);
+
+            const adultsEl = document.getElementById('{{ form.adults.id_for_label }}');
+            const childrenEl = document.getElementById('{{ form.children.id_for_label }}');
+            const infantsEl = document.getElementById('{{ form.infants.id_for_label }}');
+            const adultsBadge = document.getElementById('adultsBadge');
+            const childrenBadge = document.getElementById('childrenBadge');
+            const infantsBadge = document.getElementById('infantsBadge');
+            if (adultsBadge && adultsEl) adultsBadge.textContent = adultsEl.value || 0;
+            if (childrenBadge && childrenEl) childrenBadge.textContent = childrenEl.value || 0;
+            if (infantsBadge && infantsEl) infantsBadge.textContent = infantsEl.value || 0;
+            return;
+        }
+
         const adults = parseInt(document.getElementById('{{ form.adults.id_for_label }}').value) || 0;
         const children = parseInt(document.getElementById('{{ form.children.id_for_label }}').value) || 0;
         const infants = parseInt(document.getElementById('{{ form.infants.id_for_label }}').value) || 0;
