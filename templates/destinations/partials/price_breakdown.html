@@ -1,4 +1,11 @@
-<div class="card border-0 bg-light">
+{% if validation_errors %}
+<div class="alert alert-danger py-2 mb-3" role="alert" id="destination-validation-alerts">
+    {% for err in validation_errors %}
+    <small class="d-block fw-semibold">⚠ {{ err }}</small>
+    {% endfor %}
+</div>
+{% endif %}
+<div class="card border-0 bg-light" id="price-breakdown-card" data-grand-total="{{ grand_total|default:0 }}" data-valid="{% if validation_errors or grand_total <= 0 %}0{% else %}1{% endif %}">
     <div class="card-body">
         <h5 class="card-title">Price Breakdown</h5>
         Base Package: Rs. {{ base_price|floatformat:2 }}<br>
@@ -11,6 +18,6 @@
         Service Charge (10%): Rs. {{ service_charge|floatformat:2 }}<br>
         VAT (13%): Rs. {{ vat|floatformat:2 }}<br>
         <hr>
-        <h4 class="text-primary">Estimated Total: Rs. {{ grand_total|floatformat:2 }}</h4>
+        <h4 class="text-primary mb-0" id="estimated-total-display">Estimated Total: Rs. {{ grand_total|floatformat:2 }}</h4>
     </div>
 </div>

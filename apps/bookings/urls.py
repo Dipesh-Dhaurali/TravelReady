@@ -6,6 +6,7 @@ app_name = 'bookings'
 urlpatterns = [
     path('checkout/', views.booking_checkout, name='booking_checkout'),
     path('checkout/', views.booking_checkout, name='checkout'),
+    path('custom-trip/<int:custom_trip_id>/recalc/', views.recalc_custom_trip_price_htmx, name='recalc_custom_trip_price'),
     path('<int:pk>/', views.booking_detail, name='booking_detail'),
     path('<int:pk>/itinerary/', views.download_itinerary, name='download_itinerary'),
     path('success/<int:pk>/', views.booking_success, name='booking_success'),

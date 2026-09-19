@@ -262,7 +262,7 @@
                       method="POST"
                       action="{% url 'destinations:book_destination' destination.slug %}"
                       hx-post="{% url 'destinations:calculate_price_htmx' destination.slug %}"
-                      hx-trigger="change from:#priceForm, change from:[form='priceForm']"
+                      hx-trigger="change from:#priceForm, change from:[form='priceForm'], input delay:250ms from:#num_days, input delay:250ms from:#adults, input delay:250ms from:#children"
                       hx-target="#price-breakdown"
                       hx-include="#priceForm, [form='priceForm']"
                       hx-swap="innerHTML">
@@ -293,20 +293,23 @@
                             <div class="mb-3">
                                 <label for="num_days" class="form-label fw-semibold">Number of Days</label>
                                 <div class="input-group">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('num_days').stepDown()">-</button>
-                                    <input type="number" id="num_days" name="num_days" class="form-control text-center" value="3" min="1" max="30">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('num_days').stepUp()">+</button>
+                                    <button class="btn btn-outline-secondary" type="button" id="dest_days_down">-</button>
+                                    <input type="number" id="num_days" name="num_days" class="form-control text-center fw-bold" value="3" min="1" max="30">
+                                    <button class="btn btn-outline-secondary" type="button" id="dest_days_up">+</button>
                                 </div>
+                                <div id="days-validation-error" class="invalid-feedback d-none"></div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-6">
                                     <label for="adults" class="form-label fw-semibold">Adults</label>
-                                    <input type="number" id="adults" name="adults" class="form-control" value="2" min="1" max="10">
+                                    <input type="number" id="adults" name="adults" class="form-control" value="2" min="1" max="50">
+                                    <div id="adults-validation-error" class="invalid-feedback d-none"></div>
                                 </div>
                                 <div class="col-6">
                                     <label for="children" class="form-label fw-semibold">Children</label>
-                                    <input type="number" id="children" name="children" class="form-control" value="0" min="0" max="10">
+                                    <input type="number" id="children" name="children" class="form-control" value="0" min="0" max="50">
+                                    <div id="children-validation-error" class="invalid-feedback d-none"></div>
                                 </div>
                             </div>
 
@@ -322,26 +325,11 @@
                             </div>
 
                             <div id="price-breakdown" class="mb-3">
-                                <div class="card border-0 bg-light">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Price Breakdown</h5>
-                                        Base Package: Rs. {{ base_price|floatformat:2 }}<br>
-                                        Extra Days: Rs. {{ extra_days_price|floatformat:2 }}<br>
-                                        Activities ({{ adults }} adults x Rs. {{ activity_adult_total|floatformat:2 }} + {{ children }} children x Rs. {{ activity_child_total|floatformat:2 }}): Rs. {{ activities_total|floatformat:2 }}<br>
-                                        Transport: Rs. {{ transport_total|floatformat:2 }}<br>
-                                        Hotel: Rs. {{ hotel_total|floatformat:2 }}<br>
-                                        <hr>
-                                        Subtotal: Rs. {{ subtotal|floatformat:2 }}<br>
-                                        Service Charge (10%): Rs. {{ service_charge|floatformat:2 }}<br>
-                                        VAT (13%): Rs. {{ vat|floatformat:2 }}<br>
-                                        <hr>
-                                        <h4 class="text-primary">Estimated Total: Rs. {{ grand_total|floatformat:2 }}</h4>
-                                    </div>
-                                </div>
+                                {% include "destinations/partials/price_breakdown.html" %}
                             </div>
 
                             <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary btn-lg">
+                                <button type="submit" id="btnBookNow" class="btn btn-primary btn-lg">
                                     <i class="bi bi-calendar-check me-2"></i>Book Now
                                 </button>
                                 {% if user.is_authenticated %}
@@ -361,4 +349,131 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const numDaysInput = document.getElementById('num_days');
+    const adultsInput = document.getElementById('adults');
+    const childrenInput = document.getElementById('children');
+    const destDaysDown = document.getElementById('dest_days_down');
+    const destDaysUp = document.getElementById('dest_days_up');
+    const btnBookNow = document.getElementById('btnBookNow');
+    const form = document.getElementById('priceForm');
+
+    function showInputError(input, msgId, message) {
+        input.classList.add('is-invalid');
+        const errEl = document.getElementById(msgId);
+        if (errEl) {
+            errEl.textContent = message;
+            errEl.classList.remove('d-none');
+            errEl.classList.add('d-block');
+        }
+    }
+
+    function clearInputError(input, msgId) {
+        input.classList.remove('is-invalid');
+        const errEl = document.getElementById(msgId);
+        if (errEl) {
+            errEl.textContent = '';
+            errEl.classList.remove('d-block');
+            errEl.classList.add('d-none');
+        }
+    }
+
+    function validateClientInputs() {
+        let valid = true;
+        const daysVal = numDaysInput ? numDaysInput.value.trim() : '1';
+        const days = parseInt(daysVal);
+        if (daysVal === '' || isNaN(days) || days < 1) {
+            showInputError(numDaysInput, 'days-validation-error', 'Number of days must be at least 1.');
+            valid = false;
+        } else {
+            clearInputError(numDaysInput, 'days-validation-error');
+        }
+
+        const adultsVal = adultsInput ? adultsInput.value.trim() : '1';
+        const adults = parseInt(adultsVal);
+        if (adultsVal === '' || isNaN(adults) || adults < 1) {
+            showInputError(adultsInput, 'adults-validation-error', 'There must be at least 1 adult.');
+            valid = false;
+        } else {
+            clearInputError(adultsInput, 'adults-validation-error');
+        }
+
+        const childrenVal = childrenInput ? childrenInput.value.trim() : '0';
+        const children = parseInt(childrenVal);
+        if (childrenVal !== '' && (isNaN(children) || children < 0)) {
+            showInputError(childrenInput, 'children-validation-error', 'Number of children cannot be negative.');
+            valid = false;
+        } else {
+            clearInputError(childrenInput, 'children-validation-error');
+        }
+
+        // Check estimated total
+        const card = document.getElementById('price-breakdown-card');
+        if (card) {
+            const rawTotal = parseFloat(card.getAttribute('data-grand-total') || '0');
+            const isValidAttr = card.getAttribute('data-valid');
+            if (rawTotal <= 0 || isValidAttr === '0') {
+                valid = false;
+            }
+        }
+
+        if (btnBookNow) {
+            btnBookNow.disabled = !valid;
+        }
+
+        return valid;
+    }
+
+    if (destDaysDown && numDaysInput) {
+        destDaysDown.addEventListener('click', function() {
+            let current = parseInt(numDaysInput.value) || 1;
+            if (current > 1) {
+                numDaysInput.value = current - 1;
+                numDaysInput.dispatchEvent(new Event('input', { bubbles: true }));
+                numDaysInput.dispatchEvent(new Event('change', { bubbles: true }));
+                validateClientInputs();
+            }
+        });
+    }
+
+    if (destDaysUp && numDaysInput) {
+        destDaysUp.addEventListener('click', function() {
+            let current = parseInt(numDaysInput.value) || 1;
+            if (current < 30) {
+                numDaysInput.value = current + 1;
+                numDaysInput.dispatchEvent(new Event('input', { bubbles: true }));
+                numDaysInput.dispatchEvent(new Event('change', { bubbles: true }));
+                validateClientInputs();
+            }
+        });
+    }
+
+    [numDaysInput, adultsInput, childrenInput].forEach(function(el) {
+        if (!el) return;
+        el.addEventListener('input', validateClientInputs);
+        el.addEventListener('change', validateClientInputs);
+    });
+
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (!validateClientInputs()) {
+                e.preventDefault();
+                alert('Please resolve all validation errors before proceeding.');
+            }
+        });
+    }
+
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target && evt.detail.target.id === 'price-breakdown') {
+            validateClientInputs();
+        }
+    });
+
+    validateClientInputs();
+});
+</script>
 {% endblock %}

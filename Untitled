@@ -1,0 +1,7 @@
+continue the previouis work read this and continue  `c:\Users\DipeshDip\OneDrive\Desktop\Student Projects\sarita\Continue Price Calculator and Credit.md` 
+ 
+ previous command is this 
+ ----------------------------- 
+ live updade amount system i mean i change adult 2 to 3 or number of days 3 to 4 or 4 to 3 it should live update the amount in both page and also validate it i mean person cannot be less than 1 amount cannot be 0 or less or negative like this validation realated to this sections children can be 0 number of days cannot be 0 and show that validation error messsage also , contact number shoud be 10 digit , chlidren an dinfants can be 0 but adults cant be 0 or negative like this validation also date validation retulrn date cannot be before travel date , travel date cannot be before todays date  
+ 
+ and related this calclation check and test so that everything shoulld work fine in amount cause i dont want any issues totally fix it in entire project keep same logic on all test amount realted everything i dont  need any issues

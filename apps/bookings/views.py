@@ -1,13 +1,102 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.template.loader import render_to_string
 from django.db import models
 from .models import Booking
 from .forms import BookingForm
 
-
 from decimal import Decimal
+
+from apps.destinations.views import (
+    PACKAGE_MULTIPLIERS,
+    SERVICE_CHARGE_RATE,
+    VAT_RATE,
+    _parse_raw_int,
+    _safe_positive_int,
+    validate_destination_inputs,
+)
+
+
+def _calculate_custom_trip_price(custom_trip, days=None, adults=None, children=None):
+    from apps.destinations.models import Destination
+
+    trip_destinations = custom_trip.trip_destinations.select_related('destination').all()
+    days = days if days is not None else (custom_trip.total_days or 1)
+    adults = adults if adults is not None else (custom_trip.adults or 1)
+    children = children if children is not None else (custom_trip.children or 0)
+
+    multiplier = PACKAGE_MULTIPLIERS.get(custom_trip.package_type, Decimal('1.0'))
+
+    base_price_total = Decimal('0')
+    extra_days_price_total = Decimal('0')
+    num_dest = len(trip_destinations)
+    for td in trip_destinations:
+        dest = td.destination
+        dest_days = days if num_dest <= 1 else (td.days_stay or max(1, days // num_dest))
+        extra_days = dest_days - 1 if dest_days > 1 else 0
+        base_price_total += dest.base_visit_cost * multiplier
+        extra_days_price_total += dest.base_visit_cost * Decimal(extra_days) * multiplier
+    if not trip_destinations:
+        base_price_total = Decimal('0')
+        extra_days_price_total = Decimal('0')
+
+    base_cost = base_price_total + extra_days_price_total
+
+    activities_total = Decimal('0')
+    activity_adult_total_per = Decimal('0')
+    activity_child_total_per = Decimal('0')
+    for act in custom_trip.selected_activities.all():
+        activity_adult_total_per += act.adult_price
+        activity_child_total_per += act.child_price
+        activities_total += (act.adult_price * Decimal(adults)) + (act.child_price * Decimal(children))
+
+    transport_total = Decimal('0')
+    for trans in custom_trip.selected_transportation.all():
+        if trans.per_vehicle_price and trans.per_vehicle_price > 0:
+            transport_total += trans.per_vehicle_price
+        else:
+            transport_total += trans.per_person_price * Decimal(adults + children)
+
+    hotel_total = Decimal('0')
+    valid_hotel_categories = [c[0] for c in custom_trip.HOTEL_CATEGORY_CHOICES]
+    if (custom_trip.selected_hotel_category
+            and custom_trip.selected_hotel_category in valid_hotel_categories
+            and trip_destinations):
+        cat = custom_trip.selected_hotel_category
+        for td in trip_destinations:
+            hotel = td.destination.hotels.filter(category=cat).first()
+            if hotel:
+                stay = days if num_dest <= 1 else (td.days_stay or max(1, days // num_dest))
+                hotel_nights = stay - 1 if stay > 1 else 1
+                hotel_total += hotel.per_night_rate * Decimal(hotel_nights)
+
+    subtotal = base_cost + hotel_total + activities_total + transport_total
+    if subtotal < 0:
+        subtotal = Decimal('0')
+    service_charge = subtotal * SERVICE_CHARGE_RATE
+    vat = (subtotal + service_charge) * VAT_RATE
+    grand_total = subtotal + service_charge + vat
+    if grand_total < 0:
+        grand_total = Decimal('0')
+
+    return {
+        'days': days,
+        'adults': adults,
+        'children': children,
+        'base_price': base_price_total,
+        'extra_days_price': extra_days_price_total,
+        'activity_adult_total': activity_adult_total_per,
+        'activity_child_total': activity_child_total_per,
+        'activities_total': activities_total,
+        'transport_total': transport_total,
+        'hotel_total': hotel_total,
+        'subtotal': subtotal,
+        'service_charge': service_charge,
+        'vat': vat,
+        'grand_total': grand_total,
+    }
 
 
 @login_required
@@ -55,101 +144,42 @@ def booking_checkout(request):
 
     price_context = {}
     if custom_trip:
-        from apps.destinations.models import Destination
-        trip_destinations = custom_trip.trip_destinations.select_related('destination').all()
-        days = custom_trip.total_days or 1
-        adults = custom_trip.adults or 1
-        children = custom_trip.children or 0
-
-        package_multipliers = {
-            'SINGLE': Decimal('1.0'),
-            'COUPLE': Decimal('1.8'),
-            'FAMILY': Decimal('2.5'),
-        }
-        multiplier = package_multipliers.get(custom_trip.package_type, Decimal('1.0'))
-
-        base_price_total = Decimal('0')
-        extra_days_price_total = Decimal('0')
-        for td in trip_destinations:
-            dest = td.destination
-            dest_days = td.days_stay or max(1, days // len(trip_destinations)) if trip_destinations else days
-            extra_days = dest_days - 1 if dest_days > 1 else 0
-            base_price_total += dest.base_visit_cost * multiplier
-            extra_days_price_total += dest.base_visit_cost * Decimal(extra_days) * multiplier
-        if not trip_destinations:
-            base_price_total = Decimal('0')
-            extra_days_price_total = Decimal('0')
-
-        base_cost = base_price_total + extra_days_price_total
-
-        activities_total = Decimal('0')
-        activity_adult_total_per = Decimal('0')
-        activity_child_total_per = Decimal('0')
-        for act in custom_trip.selected_activities.all():
-            activity_adult_total_per += act.adult_price
-            activity_child_total_per += act.child_price
-            activities_total += (act.adult_price * Decimal(adults)) + (act.child_price * Decimal(children))
-
-        transport_total = Decimal('0')
-        for trans in custom_trip.selected_transportation.all():
-            if trans.per_vehicle_price and trans.per_vehicle_price > 0:
-                transport_total += trans.per_vehicle_price
-            else:
-                transport_total += trans.per_person_price * Decimal(adults + children)
-
-        hotel_total = Decimal('0')
-        valid_hotel_categories = [c[0] for c in CustomTrip.HOTEL_CATEGORY_CHOICES]
-        if (custom_trip.selected_hotel_category
-                and custom_trip.selected_hotel_category in valid_hotel_categories
-                and trip_destinations):
-            cat = custom_trip.selected_hotel_category
-            for td in trip_destinations:
-                hotel = td.destination.hotels.filter(category=cat).first()
-                if hotel:
-                    stay = td.days_stay or (days // len(trip_destinations))
-                    hotel_total += hotel.per_night_rate * Decimal(max(1, stay - 1))
-
-        subtotal = base_cost + hotel_total + activities_total + transport_total
-        service_charge = subtotal * Decimal('0.10')
-        vat = (subtotal + service_charge) * Decimal('0.13')
-        grand_total = subtotal + service_charge + vat
-
+        breakdown = _calculate_custom_trip_price(custom_trip)
+        grand_total_display = breakdown['grand_total']
         if custom_trip.total_calculated_price and custom_trip.total_calculated_price > 0:
-            grand_total_display = custom_trip.total_calculated_price
-        else:
-            grand_total_display = grand_total
-
-        scaling = Decimal('1.0')
-        if grand_total > 0:
-            scaling = Decimal(grand_total_display) / grand_total
-
+            stored = Decimal(str(custom_trip.total_calculated_price))
+            if abs(stored - grand_total_display) > 1:
+                grand_total_display = stored
         partial_amount = grand_total_display * Decimal('0.30')
         balance_amount = grand_total_display - partial_amount
 
         price_context = {
             'is_custom_trip': True,
-            'base_price': base_price_total * scaling,
-            'extra_days_price': extra_days_price_total * scaling,
-            'activity_adult_total': activity_adult_total_per * scaling,
-            'activity_child_total': activity_child_total_per * scaling,
-            'activities_total': activities_total * scaling,
-            'transport_total': transport_total * scaling,
-            'hotel_total': hotel_total * scaling,
-            'subtotal': subtotal * scaling,
-            'service_charge': service_charge * scaling,
-            'vat': vat * scaling,
+            'base_price': breakdown['base_price'],
+            'extra_days_price': breakdown['extra_days_price'],
+            'activity_adult_total': breakdown['activity_adult_total'],
+            'activity_child_total': breakdown['activity_child_total'],
+            'activities_total': breakdown['activities_total'],
+            'transport_total': breakdown['transport_total'],
+            'hotel_total': breakdown['hotel_total'],
+            'subtotal': breakdown['subtotal'],
+            'service_charge': breakdown['service_charge'],
+            'vat': breakdown['vat'],
             'grand_total': grand_total_display,
             'partial_amount': partial_amount,
             'balance_amount': balance_amount,
+            'validation_errors': [],
         }
     elif package:
         price_context = {
             'is_custom_trip': False,
+            'validation_errors': [],
         }
     elif quotation:
         price_context = {
             'is_custom_trip': False,
             'grand_total': Decimal(str(quotation.admin_quoted_price or quotation.budget or 0)),
+            'validation_errors': [],
         }
 
     if request.method == 'POST':
@@ -166,12 +196,33 @@ def booking_checkout(request):
             if package:
                 base_cost = Decimal(str(package.base_price))
             elif custom_trip:
-                base_cost = Decimal(str(custom_trip.total_calculated_price or price_context.get('grand_total', 0)))
+                adults_val = max(1, int(form.cleaned_data.get('adults') or 1))
+                children_val = max(0, int(form.cleaned_data.get('children') or 0))
+                infants_val = max(0, int(form.cleaned_data.get('infants') or 0))
+                raw_days = _parse_raw_int(request.POST.get('total_days', custom_trip.total_days or 1), 1)
+                days_val = max(1, raw_days)
+                recalc = _calculate_custom_trip_price(
+                    custom_trip,
+                    days=days_val,
+                    adults=adults_val,
+                    children=children_val,
+                )
+                base_cost = recalc['grand_total']
+                custom_trip.adults = adults_val
+                custom_trip.children = children_val
+                custom_trip.infants = infants_val
+                custom_trip.total_days = days_val
+                custom_trip.total_calculated_price = base_cost
+                custom_trip.save()
+                td_list = list(custom_trip.trip_destinations.all())
+                if len(td_list) == 1:
+                    td_list[0].days_stay = days_val
+                    td_list[0].save()
             elif quotation:
                 q_price = quotation.admin_quoted_price or quotation.budget or 0
                 base_cost = Decimal(str(q_price))
 
-            if custom_trip:
+            if custom_trip or quotation:
                 total_cost = base_cost
             else:
                 adults = Decimal(str(booking.adults or 1))
@@ -186,11 +237,13 @@ def booking_checkout(request):
                 if total_cost == Decimal('0') and base_cost > Decimal('0'):
                     total_cost = base_cost
 
-            booking.total_cost = round(total_cost, 2)
-            booking.status = 'PENDING'
-            booking.save()
-
-            return redirect('payments:payment_page', booking_id=booking.booking_id)
+            if total_cost <= Decimal('0'):
+                messages.error(request, 'Total booking amount must be greater than 0. Please review your selections.')
+            else:
+                booking.total_cost = round(total_cost, 2)
+                booking.status = 'PENDING'
+                booking.save()
+                return redirect('payments:payment_page', booking_id=booking.booking_id)
     else:
         form = BookingForm(initial=initial)
 
@@ -204,6 +257,88 @@ def booking_checkout(request):
     }
     context.update(price_context)
     return render(request, 'bookings/checkout.html', context)
+
+
+@login_required
+def recalc_custom_trip_price_htmx(request, custom_trip_id):
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+
+    from apps.custom_trips.models import CustomTrip
+    custom_trip = get_object_or_404(CustomTrip, id=custom_trip_id, user=request.user)
+
+    raw_adults = _parse_raw_int(request.POST.get('adults', custom_trip.adults or 1), 1)
+    raw_children = _parse_raw_int(request.POST.get('children', custom_trip.children or 0), 0)
+    raw_infants = _parse_raw_int(request.POST.get('infants', custom_trip.infants or 0), 0)
+    raw_days = _parse_raw_int(request.POST.get('total_days', custom_trip.total_days or 1), 1)
+
+    validation_errors = []
+    if raw_days < 1:
+        validation_errors.append('Number of days must be at least 1.')
+    if raw_adults < 1:
+        validation_errors.append('There must be at least 1 adult.')
+    if raw_children < 0:
+        validation_errors.append('Number of children cannot be negative.')
+    if raw_infants < 0:
+        validation_errors.append('Number of infants cannot be negative.')
+    if (raw_adults + raw_children + raw_infants) < 1:
+        validation_errors.append('There must be at least 1 traveler.')
+
+    days = max(1, raw_days)
+    adults = max(1, raw_adults)
+    children = max(0, raw_children)
+    infants = max(0, raw_infants)
+
+    breakdown = _calculate_custom_trip_price(custom_trip, days=days, adults=adults, children=children)
+    grand_total = breakdown['grand_total']
+
+    if grand_total <= Decimal('0'):
+        validation_errors.append('Total booking amount must be greater than 0.')
+
+    partial_amount = grand_total * Decimal('0.30')
+    balance_amount = grand_total - partial_amount
+
+    if not validation_errors and grand_total > Decimal('0'):
+        custom_trip.adults = adults
+        custom_trip.children = children
+        custom_trip.infants = infants
+        custom_trip.total_days = days
+        custom_trip.total_calculated_price = grand_total
+        custom_trip.save()
+        td_list = list(custom_trip.trip_destinations.all())
+        if len(td_list) == 1:
+            td_list[0].days_stay = days
+            td_list[0].save()
+
+    context = {
+        'custom_trip': custom_trip,
+        'is_custom_trip': True,
+        'base_price': breakdown['base_price'],
+        'extra_days_price': breakdown['extra_days_price'],
+        'activity_adult_total': breakdown['activity_adult_total'],
+        'activity_child_total': breakdown['activity_child_total'],
+        'activities_total': breakdown['activities_total'],
+        'transport_total': breakdown['transport_total'],
+        'hotel_total': breakdown['hotel_total'],
+        'subtotal': breakdown['subtotal'],
+        'service_charge': breakdown['service_charge'],
+        'vat': breakdown['vat'],
+        'grand_total': grand_total,
+        'partial_amount': partial_amount,
+        'balance_amount': balance_amount,
+        'validation_errors': validation_errors,
+        'adults': adults,
+        'children': children,
+        'infants': infants,
+        'days': days,
+    }
+
+    html = render_to_string(
+        'bookings/partials/checkout_price_summary.html',
+        context,
+        request=request,
+    )
+    return HttpResponse(html)
 
 
 @login_required

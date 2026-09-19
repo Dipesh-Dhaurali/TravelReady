@@ -1,0 +1,101 @@
+{% if validation_errors %}
+<div class="alert alert-danger py-2 mb-3" role="alert" id="checkout-validation-errors">
+    {% for err in validation_errors %}
+    <small class="d-block fw-semibold">⚠ {{ err }}</small>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div id="checkout-summary-content" data-grand-total="{{ grand_total|default:0 }}" data-valid="{% if validation_errors or grand_total <= 0 %}0{% else %}1{% endif %}">
+    <div class="mb-3 pb-3 border-bottom">
+        <h6 class="fw-bold mb-1">
+            {% if package %}{{ package.title }}{% elif custom_trip %}{{ custom_trip.trip_name|default:"Custom Trip" }}{% elif quotation %}{{ quotation.title|default:"Custom Quotation" }}{% else %}Trip Details{% endif %}
+        </h6>
+        <div class="text-muted small">
+            {% if package and package.destination %}
+                <i class="bi bi-geo-alt me-1"></i>{{ package.destination.name }}
+            {% elif custom_trip and custom_trip.trip_destinations.all %}
+                <i class="bi bi-geo-alt me-1"></i>{% for td in custom_trip.trip_destinations.all %}{{ td.destination.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+            {% endif %}
+            {% if custom_trip %}
+                &nbsp;·&nbsp;<i class="bi bi-calendar3 me-1"></i><span id="summary-duration-display">{{ days|default:custom_trip.total_days|default:3 }}</span> Days
+            {% elif package and package.base_days %}
+                &nbsp;·&nbsp;<i class="bi bi-calendar3 me-1"></i>{{ package.base_days }} Days
+            {% endif %}
+        </div>
+    </div>
+
+    {% if is_custom_trip or custom_trip %}
+    <div class="small mb-3 lh-lg">
+        <div class="d-flex justify-content-between">
+            <span class="text-muted">Base Package:</span>
+            <strong class="text-dark">Rs. {{ base_price|default:0|floatformat:2 }}</strong>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span class="text-muted">Extra Days:</span>
+            <strong class="text-dark">Rs. {{ extra_days_price|default:0|floatformat:2 }}</strong>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span class="text-muted">Activities ({{ adults|default:custom_trip.adults|default:1 }} adults × Rs. {{ activity_adult_total|default:0|floatformat:2 }} + {{ children|default:custom_trip.children|default:0 }} children × Rs. {{ activity_child_total|default:0|floatformat:2 }}):</span>
+            <strong class="text-dark">Rs. {{ activities_total|default:0|floatformat:2 }}</strong>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span class="text-muted">Transport:</span>
+            <strong class="text-dark">Rs. {{ transport_total|default:0|floatformat:2 }}</strong>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span class="text-muted">Hotel:</span>
+            <strong class="text-dark">Rs. {{ hotel_total|default:0|floatformat:2 }}</strong>
+        </div>
+        <div class="d-flex justify-content-between pt-1 border-top mt-2 fw-semibold">
+            <span>Subtotal:</span>
+            <span>Rs. {{ subtotal|default:0|floatformat:2 }}</span>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span class="text-muted">Service Charge (10%):</span>
+            <span>Rs. {{ service_charge|default:0|floatformat:2 }}</span>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span class="text-muted">VAT (13%):</span>
+            <span>Rs. {{ vat|default:0|floatformat:2 }}</span>
+        </div>
+    </div>
+    {% else %}
+    <div class="small mb-3 lh-lg">
+        <div class="d-flex justify-content-between">
+            <span class="text-muted">Base Price {% if package %}<small>(per person)</small>{% endif %}:</span>
+            <strong class="text-dark">Rs. {% if package %}{{ package.base_price|default:0|floatformat:2 }}{% elif quotation %}{{ quotation.admin_quoted_price|default:quotation.budget|default:0|floatformat:2 }}{% else %}0.00{% endif %}</strong>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span class="text-muted">Adults (<span class="badge bg-secondary" id="adultsBadge">{{ form.adults.value|default:1 }}</span> ×):</span>
+            <strong id="adultsCost">Rs. 0.00</strong>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span class="text-muted">Children (<span class="badge bg-secondary" id="childrenBadge">{{ form.children.value|default:0 }}</span> × 50%):</span>
+            <strong id="childrenCost">Rs. 0.00</strong>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span class="text-muted">Infants (<span class="badge bg-secondary" id="infantsBadge">{{ form.infants.value|default:0 }}</span> × 10%):</span>
+            <strong id="infantsCost">Rs. 0.00</strong>
+        </div>
+    </div>
+    {% endif %}
+
+    <hr class="my-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="h5 fw-bold mb-0">Total Cost</span>
+        <span class="h4 fw-bold text-primary mb-0" id="totalCost">Rs. {{ grand_total|default:0|floatformat:2 }}</span>
+    </div>
+
+    <div class="bg-light p-3 rounded mb-2">
+        <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted small">Due Today (30%):</span>
+            <strong id="partialAmount" class="text-success">Rs. {{ partial_amount|default:0|floatformat:2 }}</strong>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span class="text-muted small">Balance Later:</span>
+            <strong id="balanceAmount" class="text-secondary">Rs. {{ balance_amount|default:0|floatformat:2 }}</strong>
+        </div>
+    </div>
+</div>

@@ -3,7 +3,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 
@@ -20,6 +20,141 @@ try:
     HAS_PACKAGES = True
 except ImportError:
     HAS_PACKAGES = False
+
+
+PACKAGE_MULTIPLIERS = {
+    'SINGLE': Decimal('1.0'),
+    'COUPLE': Decimal('1.8'),
+    'FAMILY': Decimal('2.5'),
+}
+SERVICE_CHARGE_RATE = Decimal('0.10')
+VAT_RATE = Decimal('0.13')
+
+
+def _parse_raw_int(value, default):
+    if value is None or str(value).strip() == '':
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _safe_positive_int(value, default, min_value=0):
+    try:
+        v = int(value)
+    except (TypeError, ValueError):
+        return default
+    if v < min_value:
+        return default
+    return v
+
+
+def validate_destination_inputs(days, adults, children, package_type='SINGLE'):
+    errors = []
+    if days < 1:
+        errors.append('Number of days must be at least 1.')
+    if adults < 1:
+        errors.append('There must be at least 1 adult.')
+    if children < 0:
+        errors.append('Number of children cannot be negative.')
+    if package_type not in PACKAGE_MULTIPLIERS:
+        errors.append('Invalid package type.')
+    return errors
+
+
+def calculate_destination_price(
+    destination,
+    days=3,
+    package_type='SINGLE',
+    adults=2,
+    children=0,
+    hotel_category='',
+    selected_activities=None,
+    selected_transport=None,
+):
+    selected_activities = selected_activities or []
+    selected_transport = selected_transport or []
+
+    multiplier = PACKAGE_MULTIPLIERS.get(package_type, Decimal('1.0'))
+
+    base_price = destination.base_visit_cost * multiplier
+    extra_days = days - 1 if days > 1 else 0
+    extra_days_price = destination.base_visit_cost * Decimal(extra_days) * multiplier
+    base_cost = base_price + extra_days_price
+
+    hotel_total = Decimal('0')
+    hotel = None
+    if hotel_category:
+        hotel = destination.hotels.filter(category=hotel_category).first()
+        if hotel:
+            hotel_nights = days - 1 if days > 1 else 1
+            hotel_total = hotel.per_night_rate * Decimal(hotel_nights)
+
+    activity_adult_per_unit = Decimal('0')
+    activity_child_per_unit = Decimal('0')
+    activities_total = Decimal('0')
+    selected_activity_objs = []
+    if selected_activities:
+        activity_qs = destination.activities.filter(
+            id__in=selected_activities,
+            is_available=True,
+        )
+        for act in activity_qs:
+            selected_activity_objs.append(act)
+            activity_adult_per_unit += act.adult_price
+            activity_child_per_unit += act.child_price
+            activities_total += (act.adult_price * Decimal(adults)) + (
+                act.child_price * Decimal(children)
+            )
+
+    transport_total = Decimal('0')
+    selected_transport_objs = []
+    if selected_transport:
+        transport_qs = destination.transportations.filter(id__in=selected_transport)
+        for trans in transport_qs:
+            selected_transport_objs.append(trans)
+            if trans.per_vehicle_price and trans.per_vehicle_price > 0:
+                transport_total += trans.per_vehicle_price
+            else:
+                transport_total += trans.per_person_price * Decimal(adults + children)
+
+    total_people = adults + children
+    per_person_base = base_cost / Decimal(total_people) if total_people > 0 else base_cost
+    subtotal = base_cost + hotel_total + activities_total + transport_total
+    if subtotal < 0:
+        subtotal = Decimal('0')
+    service_charge = subtotal * SERVICE_CHARGE_RATE
+    vat = (subtotal + service_charge) * VAT_RATE
+    grand_total = subtotal + service_charge + vat
+    if grand_total < 0:
+        grand_total = Decimal('0')
+
+    return {
+        'destination': destination,
+        'days': days,
+        'package_type': package_type,
+        'adults': adults,
+        'children': children,
+        'total_people': total_people,
+        'base_price': base_price,
+        'extra_days_price': extra_days_price,
+        'base_cost': base_cost,
+        'per_person_base': per_person_base,
+        'hotel': hotel,
+        'hotel_total': hotel_total,
+        'activities': selected_activity_objs,
+        'activity_adult_total': activity_adult_per_unit,
+        'activity_child_total': activity_child_per_unit,
+        'activities_total': activities_total,
+        'transportations': selected_transport_objs,
+        'transport_total': transport_total,
+        'subtotal': subtotal,
+        'service_charge': service_charge,
+        'vat': vat,
+        'grand_total': grand_total,
+        'multiplier': multiplier,
+    }
 
 
 def home(request):
@@ -98,27 +233,13 @@ def destination_detail(request, slug):
     default_adults = 2
     default_children = 0
 
-    package_multipliers = {
-        'SINGLE': Decimal('1.0'),
-        'COUPLE': Decimal('1.8'),
-        'FAMILY': Decimal('2.5'),
-    }
-    multiplier = package_multipliers.get(default_package_type, Decimal('1.0'))
-
-    base_price = destination.base_visit_cost * multiplier
-    extra_days = default_days - 1 if default_days > 1 else 0
-    extra_days_price = destination.base_visit_cost * Decimal(extra_days) * multiplier
-    base_cost = base_price + extra_days_price
-    hotel_total = Decimal('0')
-    activity_adult_total = Decimal('0')
-    activity_child_total = Decimal('0')
-    activities_total = Decimal('0')
-    transport_total = Decimal('0')
-    subtotal = base_cost + hotel_total + activities_total + transport_total
-    service_charge = subtotal * Decimal('0.10')
-    vat = (subtotal + service_charge) * Decimal('0.13')
-    grand_total = subtotal + service_charge + vat
-    total_people = default_adults + default_children
+    breakdown = calculate_destination_price(
+        destination=destination,
+        days=default_days,
+        package_type=default_package_type,
+        adults=default_adults,
+        children=default_children,
+    )
 
     context = {
         'destination': destination,
@@ -127,24 +248,9 @@ def destination_detail(request, slug):
         'transportations': transportations,
         'packages': packages,
         'is_in_wishlist': is_in_wishlist,
-        'days': default_days,
-        'package_type': default_package_type,
-        'adults': default_adults,
-        'children': default_children,
-        'total_people': total_people,
-        'base_price': base_price,
-        'extra_days_price': extra_days_price,
-        'base_cost': base_cost,
-        'hotel_total': hotel_total,
-        'activity_adult_total': activity_adult_total,
-        'activity_child_total': activity_child_total,
-        'activities_total': activities_total,
-        'transport_total': transport_total,
-        'subtotal': subtotal,
-        'service_charge': service_charge,
-        'vat': vat,
-        'grand_total': grand_total,
+        'validation_errors': [],
     }
+    context.update(breakdown)
     return render(request, 'destinations/detail.html', context)
 
 
@@ -154,97 +260,40 @@ def calculate_price_htmx(request, slug):
 
     destination = get_object_or_404(Destination, slug=slug, status='Active')
 
-    days = int(request.POST.get('num_days', 1) or 1)
+    raw_days = _parse_raw_int(request.POST.get('num_days', 1), 1)
     package_type = request.POST.get('package_type', 'SINGLE')
-    adults = int(request.POST.get('adults', 1) or 1)
-    children = int(request.POST.get('children', 0) or 0)
+    if package_type not in PACKAGE_MULTIPLIERS:
+        package_type = 'SINGLE'
+    raw_adults = _parse_raw_int(request.POST.get('adults', 1), 1)
+    raw_children = _parse_raw_int(request.POST.get('children', 0), 0)
     hotel_category = request.POST.get('hotel_category', '')
     selected_activities = request.POST.getlist('activities')
     selected_transport = request.POST.getlist('transportation')
 
-    package_multipliers = {
-        'SINGLE': Decimal('1.0'),
-        'COUPLE': Decimal('1.8'),
-        'FAMILY': Decimal('2.5'),
-    }
-    multiplier = package_multipliers.get(package_type, Decimal('1.0'))
+    validation_errors = validate_destination_inputs(raw_days, raw_adults, raw_children, package_type)
 
-    base_price = destination.base_visit_cost * multiplier
-    extra_days = days - 1 if days > 1 else 0
-    extra_days_price = destination.base_visit_cost * Decimal(extra_days) * multiplier
-    base_cost = base_price + extra_days_price
+    days = max(1, raw_days)
+    adults = max(1, raw_adults)
+    children = max(0, raw_children)
 
-    hotel_total = Decimal('0')
-    hotel = None
-    if hotel_category:
-        hotel = destination.hotels.filter(category=hotel_category).first()
-        if hotel:
-            hotel_total = hotel.per_night_rate * Decimal(days - 1 if days > 1 else 1)
+    breakdown = calculate_destination_price(
+        destination=destination,
+        days=days,
+        package_type=package_type,
+        adults=adults,
+        children=children,
+        hotel_category=hotel_category,
+        selected_activities=selected_activities,
+        selected_transport=selected_transport,
+    )
 
-    activity_adult_per_unit = Decimal('0')
-    activity_child_per_unit = Decimal('0')
-    activities_total = Decimal('0')
-    selected_activity_objs = []
-    if selected_activities:
-        activity_qs = destination.activities.filter(
-            id__in=selected_activities,
-            is_available=True,
-        )
-        for act in activity_qs:
-            selected_activity_objs.append(act)
-            activity_adult_per_unit += act.adult_price
-            activity_child_per_unit += act.child_price
-            activities_total += (act.adult_price * Decimal(adults)) + (
-                act.child_price * Decimal(children)
-            )
+    if breakdown['grand_total'] <= Decimal('0'):
+        validation_errors.append('Estimated total must be greater than 0.')
 
-    transport_total = Decimal('0')
-    selected_transport_objs = []
-    if selected_transport:
-        transport_qs = destination.transportations.filter(id__in=selected_transport)
-        for trans in transport_qs:
-            selected_transport_objs.append(trans)
-            if trans.per_vehicle_price and trans.per_vehicle_price > 0:
-                transport_total += trans.per_vehicle_price
-            else:
-                transport_total += trans.per_person_price * Decimal(
-                    adults + children
-                )
-
-    total_people = adults + children
-    per_person_base = base_cost / Decimal(total_people) if total_people > 0 else base_cost
-    subtotal = base_cost + hotel_total + activities_total + transport_total
-    service_charge_rate = Decimal('0.10')
-    service_charge = subtotal * service_charge_rate
-    vat_rate = Decimal('0.13')
-    vat = (subtotal + service_charge) * vat_rate
-    grand_total = subtotal + service_charge + vat
-
-    breakdown = {
-        'destination': destination,
-        'days': days,
-        'package_type': package_type,
-        'adults': adults,
-        'children': children,
-        'total_people': total_people,
-        'base_price': base_price,
-        'extra_days_price': extra_days_price,
-        'base_cost': base_cost,
-        'per_person_base': per_person_base,
-        'hotel': hotel,
-        'hotel_total': hotel_total,
-        'activities': selected_activity_objs,
-        'activity_adult_total': activity_adult_per_unit,
-        'activity_child_total': activity_child_per_unit,
-        'activities_total': activities_total,
-        'transportations': selected_transport_objs,
-        'transport_total': transport_total,
-        'subtotal': subtotal,
-        'service_charge': service_charge,
-        'vat': vat,
-        'grand_total': grand_total,
-        'multiplier': multiplier,
-    }
+    breakdown['validation_errors'] = validation_errors
+    breakdown['adults'] = adults
+    breakdown['children'] = children
+    breakdown['days'] = days
 
     html = render_to_string(
         'destinations/partials/price_breakdown.html',
@@ -259,60 +308,41 @@ def book_destination_redirect(request, slug):
     destination = get_object_or_404(Destination, slug=slug, status='Active')
 
     if request.method == 'POST':
-        days = int(request.POST.get('num_days', 1) or 1)
+        raw_days = _parse_raw_int(request.POST.get('num_days', 1), 1)
         package_type = request.POST.get('package_type', 'SINGLE')
-        adults = int(request.POST.get('adults', 1) or 1)
-        children = int(request.POST.get('children', 0) or 0)
+        if package_type not in PACKAGE_MULTIPLIERS:
+            package_type = 'SINGLE'
+        raw_adults = _parse_raw_int(request.POST.get('adults', 1), 1)
+        raw_children = _parse_raw_int(request.POST.get('children', 0), 0)
         hotel_category = request.POST.get('hotel_category', '')
         selected_activities = request.POST.getlist('activities')
         selected_transport = request.POST.getlist('transportation')
 
-        package_multipliers = {
-            'SINGLE': Decimal('1.0'),
-            'COUPLE': Decimal('1.8'),
-            'FAMILY': Decimal('2.5'),
-        }
-        multiplier = package_multipliers.get(package_type, Decimal('1.0'))
+        validation_errors = validate_destination_inputs(raw_days, raw_adults, raw_children, package_type)
+        if validation_errors:
+            for err in validation_errors:
+                messages.error(request, err)
+            return redirect('destinations:destination_detail', slug=slug)
 
-        base_price = destination.base_visit_cost * multiplier
-        extra_days = days - 1 if days > 1 else 0
-        extra_days_price = destination.base_visit_cost * Decimal(extra_days) * multiplier
-        base_cost = base_price + extra_days_price
+        days = max(1, raw_days)
+        adults = max(1, raw_adults)
+        children = max(0, raw_children)
 
-        hotel_total = Decimal('0')
-        if hotel_category:
-            hotel = destination.hotels.filter(category=hotel_category).first()
-            if hotel:
-                hotel_total = hotel.per_night_rate * Decimal(days - 1 if days > 1 else 1)
+        breakdown = calculate_destination_price(
+            destination=destination,
+            days=days,
+            package_type=package_type,
+            adults=adults,
+            children=children,
+            hotel_category=hotel_category,
+            selected_activities=selected_activities,
+            selected_transport=selected_transport,
+        )
+        grand_total = breakdown['grand_total']
 
-        activities_total = Decimal('0')
-        if selected_activities:
-            activity_qs = destination.activities.filter(
-                id__in=selected_activities,
-                is_available=True,
-            )
-            for act in activity_qs:
-                activities_total += (act.adult_price * Decimal(adults)) + (
-                    act.child_price * Decimal(children)
-                )
-
-        transport_total = Decimal('0')
-        if selected_transport:
-            transport_qs = destination.transportations.filter(id__in=selected_transport)
-            for trans in transport_qs:
-                if trans.per_vehicle_price and trans.per_vehicle_price > 0:
-                    transport_total += trans.per_vehicle_price
-                else:
-                    transport_total += trans.per_person_price * Decimal(
-                        adults + children
-                    )
-
-        subtotal = base_cost + hotel_total + activities_total + transport_total
-        service_charge_rate = Decimal('0.10')
-        service_charge = subtotal * service_charge_rate
-        vat_rate = Decimal('0.13')
-        vat = (subtotal + service_charge) * vat_rate
-        grand_total = subtotal + service_charge + vat
+        if grand_total <= 0:
+            messages.error(request, 'The estimated total must be greater than 0.')
+            return redirect('destinations:destination_detail', slug=slug)
 
         from apps.custom_trips.models import CustomTrip, CustomTripDestination
 

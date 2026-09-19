@@ -129,16 +129,16 @@
             </div>
             {% endif %}
 
-            <form method="POST" novalidate>
+            <form method="POST" novalidate id="checkoutForm">
                 {% csrf_token %}
 
                 <div class="form-section">
                     <h3 class="form-section-title h5 mb-3">
                         <i class="bi bi-calendar-range text-primary"></i>
-                        Travel Dates
+                        Travel Dates & Duration
                     </h3>
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-md-{% if custom_trip %}4{% else %}6{% endif %}">
                             <label for="{{ form.travel_date.id_for_label }}" class="form-label fw-medium">
                                 Travel Date <span class="text-danger">*</span>
                             </label>
@@ -147,7 +147,7 @@
                                 <div class="invalid-feedback d-block">{{ form.travel_date.errors }}</div>
                             {% endif %}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-{% if custom_trip %}4{% else %}6{% endif %}">
                             <label for="{{ form.return_date.id_for_label }}" class="form-label fw-medium">
                                 Return Date
                             </label>
@@ -156,6 +156,20 @@
                                 <div class="invalid-feedback d-block">{{ form.return_date.errors }}</div>
                             {% endif %}
                         </div>
+                        {% if custom_trip %}
+                        <div class="col-md-4">
+                            <label for="total_days_field" class="form-label fw-medium">
+                                Number of Days <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <button class="btn btn-outline-secondary" type="button" id="btn_checkout_days_down">-</button>
+                                <input type="number" id="total_days_field" name="total_days" class="form-control text-center fw-bold" value="{{ custom_trip.total_days|default:3 }}" min="1" max="30">
+                                <button class="btn btn-outline-secondary" type="button" id="btn_checkout_days_up">+</button>
+                            </div>
+                            <div id="checkout-days-error" class="invalid-feedback d-none"></div>
+                            <div class="form-text">Adjust days to recalculate cost</div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -321,127 +335,17 @@
                         <h4 class="card-title mb-0"><i class="bi bi-calculator-fill me-2"></i>Cost Summary</h4>
                     </div>
                     <div class="card-body">
-                        {% if package or custom_trip %}
-                        <div class="mb-3 pb-3 border-bottom">
-                            <h6 class="fw-bold mb-1">
-                                {% if package %}{{ package.title }}{% elif custom_trip %}{{ custom_trip.trip_name|default:"Custom Trip" }}{% endif %}
-                            </h6>
-                            <div class="text-muted small">
-                                {% if package and package.destination %}
-                                    <i class="bi bi-geo-alt me-1"></i>{{ package.destination.name }}
-                                {% elif custom_trip and custom_trip.trip_destinations.all %}
-                                    <i class="bi bi-geo-alt me-1"></i>{% for td in custom_trip.trip_destinations.all %}{{ td.destination.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        <div id="costBreakdown">
-                            {% if custom_trip %}
-                            <div class="cost-row">
-                                <span class="text-muted">Base Package</span>
-                                <strong>Rs. {{ base_price|default:0|floatformat:2 }}</strong>
-                            </div>
-                            <div class="cost-row">
-                                <span class="text-muted">Extra Days</span>
-                                <strong>Rs. {{ extra_days_price|default:0|floatformat:2 }}</strong>
-                            </div>
-                            <div class="cost-row">
-                                <span class="text-muted">Activities<br><small>({{ custom_trip.adults|default:1 }} adults × Rs. {{ activity_adult_total|default:0|floatformat:2 }} + {{ custom_trip.children|default:0 }} children × Rs. {{ activity_child_total|default:0|floatformat:2 }})</small></span>
-                                <strong>Rs. {{ activities_total|default:0|floatformat:2 }}</strong>
-                            </div>
-                            <div class="cost-row">
-                                <span class="text-muted">Transport</span>
-                                <strong>Rs. {{ transport_total|default:0|floatformat:2 }}</strong>
-                            </div>
-                            <div class="cost-row">
-                                <span class="text-muted">Hotel</span>
-                                <strong>Rs. {{ hotel_total|default:0|floatformat:2 }}</strong>
-                            </div>
-                            <hr class="my-2">
-                            <div class="cost-row">
-                                <span class="text-muted">Subtotal</span>
-                                <strong>Rs. {{ subtotal|default:0|floatformat:2 }}</strong>
-                            </div>
-                            <div class="cost-row">
-                                <span class="text-muted">Service Charge (10%)</span>
-                                <strong>Rs. {{ service_charge|default:0|floatformat:2 }}</strong>
-                            </div>
-                            <div class="cost-row">
-                                <span class="text-muted">VAT (13%)</span>
-                                <strong>Rs. {{ vat|default:0|floatformat:2 }}</strong>
-                            </div>
-                            {% else %}
-                            <div class="cost-row">
-                                <span class="text-muted">
-                                    Base Price
-                                    {% if package %}
-                                        <small class="d-block">(per person)</small>
-                                    {% endif %}
-                                </span>
-                                <strong>
-                                    Rs. 
-                                    {% if package %}
-                                        {{ package.base_price|default:0 }}
-                                    {% elif custom_trip %}
-                                        {{ custom_trip.total_calculated_price|default:0 }}
-                                    {% elif quotation %}
-                                        {{ quotation.admin_quoted_price|default:quotation.budget|default:0 }}
-                                    {% else %}
-                                        0
-                                    {% endif %}
-                                </strong>
-                            </div>
-                            <div class="cost-row">
-                                <span class="text-muted">Adults <span class="badge bg-secondary" id="adultsBadge">1</span> ×</span>
-                                <strong id="adultsCost">Rs. 0</strong>
-                            </div>
-                            <div class="cost-row">
-                                <span class="text-muted">Children <span class="badge bg-secondary" id="childrenBadge">0</span> × 50%</span>
-                                <strong id="childrenCost">Rs. 0</strong>
-                            </div>
-                            <div class="cost-row">
-                                <span class="text-muted">Infants <span class="badge bg-secondary" id="infantsBadge">0</span> × 10%</span>
-                                <strong id="infantsCost">Rs. 0</strong>
-                            </div>
-                            {% endif %}
+                        <div id="costBreakdown"
+                             {% if custom_trip %}
+                             hx-post="{% url 'bookings:recalc_custom_trip_price' custom_trip.id %}"
+                             hx-trigger="change from:#{{ form.adults.id_for_label }}, change from:#{{ form.children.id_for_label }}, change from:#{{ form.infants.id_for_label }}, change from:#total_days_field, input delay:250ms from:#{{ form.adults.id_for_label }}, input delay:250ms from:#{{ form.children.id_for_label }}, input delay:250ms from:#{{ form.infants.id_for_label }}, input delay:250ms from:#total_days_field"
+                             hx-include="#{{ form.adults.id_for_label }}, #{{ form.children.id_for_label }}, #{{ form.infants.id_for_label }}, #total_days_field"
+                             hx-swap="innerHTML"
+                             {% endif %}>
+                            {% include "bookings/partials/checkout_price_summary.html" %}
                         </div>
 
-                        <hr class="my-3">
-
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="h5 fw-bold mb-0">Total Cost</span>
-                            {% if custom_trip %}
-                            <span class="h4 fw-bold text-primary mb-0" id="totalCost">Rs. {{ grand_total|default:0|floatformat:2 }}</span>
-                            {% else %}
-                            <span class="h4 fw-bold text-primary mb-0" id="totalCost">Rs. 0</span>
-                            {% endif %}
-                        </div>
-
-                        <div class="bg-light p-3 rounded mb-3">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Due Today (30%):</span>
-                                <strong id="partialAmount">
-                                    {% if custom_trip %}
-                                    Rs. {{ partial_amount|default:0|floatformat:2 }}
-                                    {% else %}
-                                    Rs. 0
-                                    {% endif %}
-                                </strong>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <span class="text-muted">Balance Later:</span>
-                                <strong id="balanceAmount">
-                                    {% if custom_trip %}
-                                    Rs. {{ balance_amount|default:0|floatformat:2 }}
-                                    {% else %}
-                                    Rs. 0
-                                    {% endif %}
-                                </strong>
-                            </div>
-                        </div>
-
-                        <div class="d-grid gap-2 mb-3">
+                        <div class="d-grid gap-2 mb-3 mt-3">
                             <div class="small d-flex align-items-center text-muted">
                                 <i class="bi bi-shield-check text-success me-2 fs-5"></i>
                                 <span>Secure payment with SSL encryption</span>
@@ -486,33 +390,159 @@
     );
 
     function formatCurrency(amount) {
+        if (isNaN(amount) || amount < 0) amount = 0;
         return 'Rs. ' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
 
-    function updateCosts() {
-        if (isCustomTrip) {
-            const totalCost = basePrice;
-            const partialAmount = totalCost * 0.3;
-            const balanceAmount = totalCost - partialAmount;
-            document.getElementById('totalCost').textContent = formatCurrency(totalCost);
-            document.getElementById('partialAmount').textContent = formatCurrency(partialAmount);
-            document.getElementById('balanceAmount').textContent = formatCurrency(balanceAmount);
-
-            const adultsEl = document.getElementById('{{ form.adults.id_for_label }}');
-            const childrenEl = document.getElementById('{{ form.children.id_for_label }}');
-            const infantsEl = document.getElementById('{{ form.infants.id_for_label }}');
-            const adultsBadge = document.getElementById('adultsBadge');
-            const childrenBadge = document.getElementById('childrenBadge');
-            const infantsBadge = document.getElementById('infantsBadge');
-            if (adultsBadge && adultsEl) adultsBadge.textContent = adultsEl.value || 0;
-            if (childrenBadge && childrenEl) childrenBadge.textContent = childrenEl.value || 0;
-            if (infantsBadge && infantsEl) infantsBadge.textContent = infantsEl.value || 0;
-            return;
+    function showFieldError(input, message) {
+        clearFieldError(input);
+        if (!input) return;
+        input.classList.add('is-invalid');
+        const feedback = document.createElement('div');
+        feedback.className = 'invalid-feedback d-block input-validation';
+        feedback.textContent = message;
+        if (input.parentNode && input.parentNode.classList.contains('input-group')) {
+            input.parentNode.parentNode.appendChild(feedback);
+        } else if (input.parentNode) {
+            input.parentNode.appendChild(feedback);
         }
+    }
 
-        const adults = parseInt(document.getElementById('{{ form.adults.id_for_label }}').value) || 0;
-        const children = parseInt(document.getElementById('{{ form.children.id_for_label }}').value) || 0;
-        const infants = parseInt(document.getElementById('{{ form.infants.id_for_label }}').value) || 0;
+    function clearFieldError(input) {
+        if (!input) return;
+        input.classList.remove('is-invalid');
+        input.classList.add('is-valid');
+        const parent = (input.parentNode && input.parentNode.classList.contains('input-group')) ? input.parentNode.parentNode : input.parentNode;
+        if (parent) {
+            parent.querySelectorAll('.invalid-feedback.input-validation').forEach(function (n) {
+                n.remove();
+            });
+        }
+    }
+
+    function validatePhone(input) {
+        if (!input) return true;
+        const raw = input.value.trim();
+        if (raw.length === 0) {
+            clearFieldError(input);
+            return true;
+        }
+        const digits = raw.replace(/\D/g, '');
+        if (digits.length !== 10) {
+            showFieldError(input, 'Contact number must be exactly 10 digits.');
+            return false;
+        }
+        clearFieldError(input);
+        return true;
+    }
+
+    function validateDates() {
+        const travelInput = document.getElementById('{{ form.travel_date.id_for_label }}');
+        const returnInput = document.getElementById('{{ form.return_date.id_for_label }}');
+        let ok = true;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (travelInput && travelInput.value) {
+            const travelDate = new Date(travelInput.value);
+            travelDate.setHours(0, 0, 0, 0);
+            if (travelDate < today) {
+                showFieldError(travelInput, 'Travel date cannot be before today.');
+                ok = false;
+            } else {
+                clearFieldError(travelInput);
+            }
+            if (returnInput && returnInput.value) {
+                const returnDate = new Date(returnInput.value);
+                returnDate.setHours(0, 0, 0, 0);
+                if (returnDate < travelDate) {
+                    showFieldError(returnInput, 'Return date cannot be before travel date.');
+                    ok = false;
+                } else {
+                    clearFieldError(returnInput);
+                }
+            }
+        } else if (travelInput) {
+            showFieldError(travelInput, 'Travel date is required.');
+            ok = false;
+        }
+        return ok;
+    }
+
+    function validateDays() {
+        const daysInput = document.getElementById('total_days_field');
+        if (!daysInput) return true;
+        const v = parseInt(daysInput.value);
+        if (daysInput.value.trim() === '' || isNaN(v) || v < 1) {
+            showFieldError(daysInput, 'Number of days must be at least 1.');
+            return false;
+        }
+        clearFieldError(daysInput);
+        return true;
+    }
+
+    function validateTravelers() {
+        const adultsInput = document.getElementById('{{ form.adults.id_for_label }}');
+        const childrenInput = document.getElementById('{{ form.children.id_for_label }}');
+        const infantsInput = document.getElementById('{{ form.infants.id_for_label }}');
+        let ok = true;
+
+        if (adultsInput) {
+            const a = parseInt(adultsInput.value);
+            if (adultsInput.value.trim() === '' || isNaN(a) || a < 1) {
+                showFieldError(adultsInput, 'There must be at least 1 adult.');
+                ok = false;
+            } else {
+                clearFieldError(adultsInput);
+            }
+        }
+        if (childrenInput) {
+            const c = parseInt(childrenInput.value);
+            if (childrenInput.value.trim() !== '' && (isNaN(c) || c < 0)) {
+                showFieldError(childrenInput, 'Number of children cannot be negative.');
+                ok = false;
+            } else {
+                clearFieldError(childrenInput);
+            }
+        }
+        if (infantsInput) {
+            const i = parseInt(infantsInput.value);
+            if (infantsInput.value.trim() !== '' && (isNaN(i) || i < 0)) {
+                showFieldError(infantsInput, 'Number of infants cannot be negative.');
+                ok = false;
+            } else {
+                clearFieldError(infantsInput);
+            }
+        }
+        return ok;
+    }
+
+    function validateTotalAmount() {
+        const summaryCard = document.getElementById('checkout-summary-content');
+        if (summaryCard) {
+            const total = parseFloat(summaryCard.getAttribute('data-grand-total') || '0');
+            const valid = summaryCard.getAttribute('data-valid');
+            if (total <= 0 || valid === '0') {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function updatePackageCosts() {
+        if (isCustomTrip) return;
+
+        const adultsInput = document.getElementById('{{ form.adults.id_for_label }}');
+        const childrenInput = document.getElementById('{{ form.children.id_for_label }}');
+        const infantsInput = document.getElementById('{{ form.infants.id_for_label }}');
+
+        let adults = adultsInput ? parseInt(adultsInput.value) || 0 : 0;
+        let children = childrenInput ? parseInt(childrenInput.value) || 0 : 0;
+        let infants = infantsInput ? parseInt(infantsInput.value) || 0 : 0;
+
+        if (adults < 1) adults = 1;
+        if (children < 0) children = 0;
+        if (infants < 0) infants = 0;
 
         const perPerson = basePrice > 0 ? basePrice : 0;
         const adultsCost = adults * perPerson;
@@ -523,37 +553,221 @@
         if (totalCost === 0 && basePrice > 0) {
             totalCost = basePrice;
         }
+        if (totalCost < 0) totalCost = 0;
 
         const partialAmount = totalCost * 0.3;
         const balanceAmount = totalCost - partialAmount;
 
-        document.getElementById('adultsBadge').textContent = adults;
-        document.getElementById('childrenBadge').textContent = children;
-        document.getElementById('infantsBadge').textContent = infants;
+        const adultsBadge = document.getElementById('adultsBadge');
+        const childrenBadge = document.getElementById('childrenBadge');
+        const infantsBadge = document.getElementById('infantsBadge');
+        if (adultsBadge) adultsBadge.textContent = adults;
+        if (childrenBadge) childrenBadge.textContent = children;
+        if (infantsBadge) infantsBadge.textContent = infants;
 
-        document.getElementById('adultsCost').textContent = formatCurrency(adultsCost);
-        document.getElementById('childrenCost').textContent = formatCurrency(childrenCost);
-        document.getElementById('infantsCost').textContent = formatCurrency(infantsCost);
-        document.getElementById('totalCost').textContent = formatCurrency(totalCost);
-        document.getElementById('partialAmount').textContent = formatCurrency(partialAmount);
-        document.getElementById('balanceAmount').textContent = formatCurrency(balanceAmount);
+        const acEl = document.getElementById('adultsCost');
+        const ccEl = document.getElementById('childrenCost');
+        const icEl = document.getElementById('infantsCost');
+        if (acEl) acEl.textContent = formatCurrency(adultsCost);
+        if (ccEl) ccEl.textContent = formatCurrency(childrenCost);
+        if (icEl) icEl.textContent = formatCurrency(infantsCost);
+
+        const tcEl = document.getElementById('totalCost');
+        const paEl = document.getElementById('partialAmount');
+        const baEl = document.getElementById('balanceAmount');
+        if (tcEl) tcEl.textContent = formatCurrency(totalCost);
+        if (paEl) paEl.textContent = formatCurrency(partialAmount);
+        if (baEl) baEl.textContent = formatCurrency(balanceAmount);
+
+        const card = document.getElementById('checkout-summary-content');
+        if (card) {
+            card.setAttribute('data-grand-total', totalCost);
+            card.setAttribute('data-valid', totalCost > 0 ? '1' : '0');
+        }
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('#{{ form.adults.id_for_label }}, #{{ form.children.id_for_label }}, #{{ form.infants.id_for_label }}').forEach(function(el) {
-            el.classList.add('form-control');
-            el.addEventListener('input', updateCosts);
-        });
+        const adultsInput = document.getElementById('{{ form.adults.id_for_label }}');
+        const childrenInput = document.getElementById('{{ form.children.id_for_label }}');
+        const infantsInput = document.getElementById('{{ form.infants.id_for_label }}');
+        const travelInput = document.getElementById('{{ form.travel_date.id_for_label }}');
+        const returnInput = document.getElementById('{{ form.return_date.id_for_label }}');
+        const phoneInput = document.getElementById('{{ form.emergency_contact_phone.id_for_label }}');
+        const totalDaysInput = document.getElementById('total_days_field');
+        const btnDaysDown = document.getElementById('btn_checkout_days_down');
+        const btnDaysUp = document.getElementById('btn_checkout_days_up');
+        const form = document.getElementById('checkoutForm');
 
+        [adultsInput, childrenInput, infantsInput].forEach(function(el) {
+            if (!el) return;
+            el.classList.add('form-control');
+        });
         document.querySelectorAll('input[type="date"], textarea, input[type="text"], input[type="tel"]').forEach(function(el) {
             el.classList.add('form-control');
         });
-
         document.querySelectorAll('textarea').forEach(function(el) {
             el.setAttribute('rows', '3');
         });
 
-        updateCosts();
+        function syncReturnDateFromDays() {
+            if (travelInput && travelInput.value && totalDaysInput && totalDaysInput.value) {
+                const days = parseInt(totalDaysInput.value) || 1;
+                const tDate = new Date(travelInput.value);
+                tDate.setDate(tDate.getDate() + (days - 1));
+                returnInput.value = tDate.toISOString().split('T')[0];
+                validateDates();
+            }
+        }
+
+        function syncDaysFromDates() {
+            if (travelInput && travelInput.value && returnInput && returnInput.value && totalDaysInput) {
+                const tDate = new Date(travelInput.value);
+                const rDate = new Date(returnInput.value);
+                const diffTime = rDate - tDate;
+                if (diffTime >= 0) {
+                    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                    if (diffDays >= 1 && parseInt(totalDaysInput.value) !== diffDays) {
+                        totalDaysInput.value = diffDays;
+                        totalDaysInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        totalDaysInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+            }
+        }
+
+        if (btnDaysDown && totalDaysInput) {
+            btnDaysDown.addEventListener('click', function() {
+                let cur = parseInt(totalDaysInput.value) || 1;
+                if (cur > 1) {
+                    totalDaysInput.value = cur - 1;
+                    totalDaysInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    totalDaysInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    syncReturnDateFromDays();
+                    validateDays();
+                }
+            });
+        }
+
+        if (btnDaysUp && totalDaysInput) {
+            btnDaysUp.addEventListener('click', function() {
+                let cur = parseInt(totalDaysInput.value) || 1;
+                if (cur < 30) {
+                    totalDaysInput.value = cur + 1;
+                    totalDaysInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    totalDaysInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    syncReturnDateFromDays();
+                    validateDays();
+                }
+            });
+        }
+
+        if (totalDaysInput) {
+            totalDaysInput.addEventListener('input', function() {
+                validateDays();
+                syncReturnDateFromDays();
+            });
+            totalDaysInput.addEventListener('change', function() {
+                validateDays();
+                syncReturnDateFromDays();
+            });
+        }
+
+        if (adultsInput) {
+            adultsInput.addEventListener('input', function() {
+                validateTravelers();
+                updatePackageCosts();
+            });
+            adultsInput.addEventListener('change', function() {
+                validateTravelers();
+                updatePackageCosts();
+            });
+        }
+
+        if (childrenInput) {
+            childrenInput.addEventListener('input', function() {
+                validateTravelers();
+                updatePackageCosts();
+            });
+            childrenInput.addEventListener('change', function() {
+                validateTravelers();
+                updatePackageCosts();
+            });
+        }
+
+        if (infantsInput) {
+            infantsInput.addEventListener('input', function() {
+                validateTravelers();
+                updatePackageCosts();
+            });
+            infantsInput.addEventListener('change', function() {
+                validateTravelers();
+                updatePackageCosts();
+            });
+        }
+
+        if (travelInput) {
+            const today = new Date().toISOString().split('T')[0];
+            travelInput.setAttribute('min', today);
+            travelInput.addEventListener('change', function() {
+                validateDates();
+                if (travelInput.value) {
+                    if (returnInput) {
+                        returnInput.setAttribute('min', travelInput.value);
+                    }
+                    syncReturnDateFromDays();
+                }
+            });
+        }
+
+        if (returnInput) {
+            returnInput.addEventListener('change', function() {
+                validateDates();
+                syncDaysFromDates();
+            });
+        }
+
+        if (phoneInput) {
+            phoneInput.setAttribute('maxlength', '15');
+            phoneInput.addEventListener('input', function() {
+                phoneInput.value = phoneInput.value.replace(/[^\d+\-() ]/g, '');
+                validatePhone(phoneInput);
+            });
+        }
+
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                let valid = true;
+                if (!validateDates()) valid = false;
+                if (!validateTravelers()) valid = false;
+                if (!validateDays()) valid = false;
+                if (phoneInput && !validatePhone(phoneInput)) valid = false;
+                if (!validateTotalAmount()) {
+                    alert('Total booking amount must be greater than 0. Please review your selections.');
+                    valid = false;
+                }
+
+                if (!valid) {
+                    e.preventDefault();
+                    const firstInvalid = form.querySelector('.is-invalid');
+                    if (firstInvalid) {
+                        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstInvalid.focus();
+                    }
+                }
+            });
+        }
+
+        updatePackageCosts();
+    });
+
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target && evt.detail.target.id === 'costBreakdown') {
+            const totalDaysInput = document.getElementById('total_days_field');
+            const summaryDur = document.getElementById('summary-duration-display');
+            if (totalDaysInput && summaryDur) {
+                summaryDur.textContent = totalDaysInput.value;
+            }
+        }
     });
 </script>
 {% endblock %}
